@@ -1,10 +1,11 @@
 #include "Database.h"
 #include "AttributeSet.h"
+#include "DisjointSet.h"
 #include <fstream>
 #include <ctime>
 
 void testdb() {
-	bool test = false;
+	bool test = true;
 
 	Database *pdb;
 	ifstream *pfin;
@@ -36,10 +37,9 @@ void testattr() {
 	AttributeSet as(4);
 	
 }
-
 int main() {
 
-	testattr();
+	testds();
 	
 	system("pause");
 }
