@@ -4,7 +4,7 @@
 #include <ctime>
 
 void testdb() {
-	bool test = false;
+	bool test = true;
 
 	Database *pdb;
 	ifstream *pfin;
