@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include <vector>
 #include <map>
 #include <list>
@@ -8,197 +9,101 @@
 
 using namespace std;
 
-// assume the attribute_set's elements is in order
+// maximum of 32 attributes
 class AttributeSet {
 public:
-	vector<int> attribute_set;
-	Database *db = nullptr;
+	unsigned int attribute_set = 0;
 
 public:
 	AttributeSet() {}
-	AttributeSet(int k) {
-		this->clear();
-		attribute_set.push_back(k);
+	AttributeSet(unsigned int k) {
+		attribute_set = k;
 	}
-	AttributeSet(vector<int> &a) {
-		this->clear();
-		for (auto s : a) {
-			attribute_set.push_back(s);
-		}
+
+	int operator [] (int index) {
+		unsigned int k = 1 << index;
+		return (k & attribute_set) >> index;
 	}
 
 	void operator = (AttributeSet &k) {
-		this->clear();
-		for (auto &t : k.attribute_set) {
-			attribute_set.push_back(t);
-		}
+		attribute_set = k.attribute_set;
 	}
 
 	bool operator == (const AttributeSet &k) const {
-		int i = 0;
-		int la = attribute_set.size();
-		int lb = k.attribute_set.size();
-
-		if (la != lb) return false;
-		while (1) {
-			if (i == la || i == lb)
-				break;
-
-			if (attribute_set[i] != k.attribute_set[i]) {
-				return false;
-			}
-		}
-		
-		return true;
+		return attribute_set == k.attribute_set;
 	}
 
 	bool operator < (const AttributeSet &k) const {
-		int i = 0;
-		int la = attribute_set.size();
-		int lb = k.attribute_set.size();
-		while (1) {
-			if (i == la || i == lb)
-				break;
+		return attribute_set < k.attribute_set;
+	}
 
-			if (attribute_set[i] == k.attribute_set[i]) {
-				i++;
-			}
-			else if (attribute_set[i] < k.attribute_set[i]) {
-				return true;
-			}
-			else return false;
+	int size() {
+		int count = 0;
+		unsigned t = attribute_set;
+		for (int i = 0; i < 32; i++) {
+			if (t & 1)
+				count++;
+
+			t = t >> 1;
+		}
+		return count;
+	}
+
+	void insert(int k) {
+		attribute_set = attribute_set | (1 << k);
+	}
+
+	void erase(int k) {
+		attribute_set = attribute_set & (~(1 << k));
+	}
+
+	vector<int> toVector() {
+		vector<int> vec;
+		unsigned t = attribute_set;
+		for (int i = 0; i < 32; i++) {
+			if (t & 1)
+				vec.push_back(i);
+			t = t >> 1;
 		}
 
-		if (i == la && la!=lb)
-			return true;
-		else
-			return false;
-		
-	}
-
-	void push(int v) {
-		attribute_set.push_back(v);
-	}
-
-	void pop() {
-		attribute_set.pop_back();
+		return vec;
 	}
 
 	void clear() {
-		attribute_set.clear();
+		attribute_set = 0;
 	}
 
-	void setDb(Database &adb) {
-		db = &adb;
-	}
+	bool common_prefix(AttributeSet &k) {
+		int sz = size();
 
-	bool next(int count) {
-		vector<int>::reverse_iterator it = attribute_set.rbegin();
+		int count = 0;
+		unsigned t = attribute_set;
+		unsigned tk = k.attribute_set;
 
-		int c = count;
+		for (int i = 0; i < 32; i++) {
+			if ((t & 1) && (tk & 1))
+				count++;
 
-		while (it != attribute_set.rend()) {
-			if (*it != c)
-				break;
-			it++;
-			c--;
+			t = t >> 1;
+			tk = tk >> 1;
 		}
 
-		if (it == attribute_set.rend())
-			return false;
-		
-		int begin = *it + 1;
-		int end = *it + 1 + count - c;
-
-		vector<int>::reverse_iterator itp = attribute_set.rbegin();
-
-		while (itp != it) {
-			*itp = end;
-			end--;
-			itp++;
-		}
-		*it = begin;
-		return true;
+		if (count == sz - 1)
+			return true;
 	}
 
 public:
-	void intersect(AttributeSet &b,AttributeSet &result) {
-		vector<int>::iterator pa = attribute_set.begin();
-		vector<int>::iterator pb = b.attribute_set.begin();
-
-		result.clear();
-		while (pa != attribute_set.end() && pb != b.attribute_set.end()) {
-			if (*pa == *pb) {
-				result.push(*pa);
-				pa++;
-				pb++;
-			}
-			else if (*pa < *pb) {
-				pa++;
-			}
-			else {
-				pb++;
-			}
-		}
+	AttributeSet intersect(AttributeSet &b) {
+		return AttributeSet(attribute_set & b.attribute_set);
 	}
 
-	void combine(AttributeSet &b,AttributeSet &result) {
-		vector<int>::iterator pa = attribute_set.begin();
-		vector<int>::iterator pb = b.attribute_set.begin();
-
-		result.clear();
-		while (pa != attribute_set.end() || pb != b.attribute_set.end()) {
-			if (pa == attribute_set.end()) {
-				result.push(*pb);
-				pb++;
-				continue;
-			}
-			else if (pb == b.attribute_set.end()) {
-				result.push(*pa);
-				pa++;
-				continue;
-			}
-
-			if (*pa == *pb) {
-				result.push(*pa);
-				pa++;
-				pb++;
-			}
-			else if (*pa < *pb) {
-				result.push(*pa);
-				pa++;
-			}
-			else {
-				result.push(*pb);
-				pb++;
-			}
-		}
+	AttributeSet combine(AttributeSet &b) {
+		return AttributeSet(attribute_set | b.attribute_set);
 	}
 
-	void substract(AttributeSet &b, AttributeSet & result) {
-		vector<int>::iterator pa = attribute_set.begin();
-		vector<int>::iterator pb = b.attribute_set.begin();
-
-		result.clear();
-		while (pa != attribute_set.end()) {
-			if (pb == b.attribute_set.end()) {
-				result.push(*pa);
-				pa++;
-				continue;
-			}
-
-			if (*pa == *pb) {
-				pa++;
-				pb++;
-			}
-			else if (*pa < *pb) {
-				result.push(*pa);
-				pa++;
-			}
-			else {
-				pb++;
-			}
-		}
+	AttributeSet substract(AttributeSet &b) {
+		unsigned int temp = ~b.attribute_set;
+		return AttributeSet(attribute_set & temp);
 	}
 };
 
@@ -208,12 +113,17 @@ typedef vector<string> StringKey;
 
 class Partition {
 public:
-	map<StringKey,IndexSet> partition;
+	map<StringKey, IndexSet> partition;
 	AttributeSet * as;
 public:
 	Partition() { as = nullptr; }
 	Partition(AttributeSet &k, Database &db) {
 		this->doPartition(k, db);
+	}
+public:
+
+	int cardinality() {
+		return partition.size();
 	}
 
 	void doPartition(AttributeSet &k, Database &db) {
@@ -223,18 +133,20 @@ public:
 
 		list<string>::iterator *ps = new list<string>::iterator[db.table.size()];
 
-		for (auto attr : k.attribute_set) {
+		vector<int> kVector = k.toVector();
+
+		for (auto attr : kVector) {
 			ps[attr] = db.table[attr].begin();
 		}
 
-		int first = *k.attribute_set.begin();
+		int first = *kVector.begin();
 		int index = 0;
 
 
 		while (ps[first] != db.table[first].end()) {
 			StringKey temp;
 
-			for (auto attr : k.attribute_set) {
+			for (auto attr : kVector) {
 				temp.push_back(*ps[attr]);
 				ps[attr] ++;
 			}
@@ -242,7 +154,7 @@ public:
 			map<StringKey, IndexSet>::iterator it = partition.find(temp);
 
 			if (it != partition.end()) {
-				it->second.push(index);
+				it->second.insert(index);
 			}
 			else {
 				partition.insert(pair<StringKey, IndexSet>(temp, IndexSet(index)));
@@ -254,57 +166,251 @@ public:
 
 		delete[] ps;
 	}
+
+	void doPartition(Partition &p1, Partition &p2) {
+		
+	}
 };
 
-class TANE_Node{
+class TANE_Node {
 public:
 	AttributeSet as;
 	Partition pt;
-	Database *db_pointer = nullptr;
-
 	AttributeSet RHS_plus;
+
+	Database * db = nullptr;
+	TANE_Node * p1 = nullptr;
+	TANE_Node * p2 = nullptr;
 public:
 	TANE_Node() {}
-	TANE_Node(AttributeSet &ast,Database &db) { 
-		as = ast;
-		as.setDb(db);
-		db_pointer = &db;
-		pt.doPartition(as, db);
+	TANE_Node(bool blank, int total_attribute_count) {
+		if (blank == true) {
+			for (int i = 0; i < total_attribute_count; i++) {
+				RHS_plus.insert(i);
+			}
+		}
 	}
-public:
-	void calcualte_initial_RHS_plus(TANE_Layer &pre, AttributeSet &attr) {
-		AttributeSet temp(attr.attribute_set);
-		int len = temp.attribute_set.size();
-		
-
+	TANE_Node(AttributeSet &ast, Database &db) {
+		as = ast;
+		//pt.doPartition(as, db);
+		this->db = &db;
+	}
+	TANE_Node(AttributeSet &ast, TANE_Node &p1, TANE_Node &p2) {
+		as = ast;
+		//pt.doPartition(p1.pt, p2.pt);
+		this->p1 = &p1;
+		this->p2 = &p2;
 	}
 };
 
 class TANE_Layer {
 public:
-	map<AttributeSet,TANE_Node> layer;
+	map<AttributeSet, TANE_Node> layer;
 
 public:
 	TANE_Layer() {}
-	TANE_Layer(int n, int total_attribute_count, Database &db) {
-		generate_new_layer(n, total_attribute_count, db);
+	TANE_Layer(bool blank, int total_attribute_count) { 
+		layer.insert(pair<AttributeSet, TANE_Node>(AttributeSet(0), TANE_Node(blank, total_attribute_count)));
+	}
+	TANE_Layer(int total_attribute_count, Database & db) {
+		generate_first_level(total_attribute_count, db);
+	}
+	TANE_Layer(TANE_Layer &pre, int total_attribute_count) {
+		generate_next_level(pre, total_attribute_count);
 	}
 
+
 public:
+	void generate_first_level(int total_attribute_count, Database &db) {
+		for (int i = 0; i < total_attribute_count; i++) {
+			AttributeSet temp;
 
-	void generate_new_layer(int n, int total_attribute_count, Database &db) {
-		AttributeSet temp;
-		for (int i = 0; i < n; i++) {
-			temp.push(i);
-		}
+			temp.insert(i);
+			layer.insert(pair<AttributeSet, TANE_Node>(temp, TANE_Node(temp, db)));
 
-		layer.insert(pair<AttributeSet, TANE_Node>(temp, TANE_Node(temp, db)));
-		while (temp.next(total_attribute_count - 1)) {
-			layer.insert(pair <AttributeSet, TANE_Node> (temp, TANE_Node(temp, db)));
+			temp.clear();
 		}
+	}
+
+	void generate_next_level(TANE_Layer &pre, int total_attribute_count) {
+		this->clear();
+
+		map<AttributeSet, TANE_Node>::iterator p = pre.layer.begin();
+		map<AttributeSet, TANE_Node>::iterator q = p;
+
+		while (p != pre.layer.end()) {
+			q = p;
+			q++;
+			while (q != pre.layer.end()) {
+				if (!(*p).second.as.common_prefix((*q).second.as))
+					break;
+
+				AttributeSet temp = (*p).second.as.combine((*q).second.as);
+
+				vector<int> tempVector = temp.toVector();
+				bool flag = true;
+				//forall A belongs to X , X \ A belongs to Ll(pre) then add X
+				for (auto &at : tempVector) {
+					AttributeSet t_temp = temp;
+					
+					// X - A
+					t_temp.erase(at);
+					map<AttributeSet, TANE_Node> ::iterator it = pre.layer.find(t_temp);
+					if (it == pre.layer.end()){
+						flag = false;
+						break;
+					}					
+				}
+				if (flag)
+					layer.insert(pair<AttributeSet, TANE_Node>(temp,TANE_Node(temp,(*p).second,(*q).second)));
+				q++;
+			}
+
+			p++;
+		}
+	}
+
+	int size() {
+		return layer.size();
 	}
 
 	void clear() {
 		layer.clear();
 	}
 };
+
+void calcualte_initial_RHS_plus(int total_attribute_count, TANE_Layer &pre, TANE_Layer &cur) {
+	for (auto &layer_record : cur.layer) {
+
+		TANE_Node &node = layer_record.second;
+
+		int len = node.as.size();
+
+		node.RHS_plus.clear();
+
+		vector<int> asVector = node.as.toVector();
+		AttributeSet result;
+		for (int i = 0; i < len; i++) {
+			AttributeSet temp = node.as;
+			temp.erase(asVector[i]);
+
+			map<AttributeSet, TANE_Node>::iterator it = pre.layer.find(temp);
+
+			if (it == pre.layer.end()) {
+				result.clear();
+				break;
+			}
+
+			AttributeSet t = it->second.RHS_plus;
+
+			if (i == 0) {
+				result = t;
+			}
+			else {
+				// result = result intersect RHS( X - E )
+				AttributeSet a = t.intersect(result);
+				result = a;
+
+				// if result = \phi break;
+				if (result.size() == 0)
+					break;
+			}
+		}
+
+		node.RHS_plus = result;
+	}
+}
+
+void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer &cur) {
+	calcualte_initial_RHS_plus(total_attribute_count, pre, cur);
+	
+	for (auto &layer_record : cur.layer) {
+
+		TANE_Node &node = layer_record.second;
+
+		AttributeSet choice = node.RHS_plus.intersect(node.as);
+
+		int len = choice.size();
+
+		if (len > 0) {
+			if (node.db != nullptr)
+				node.pt.doPartition(node.as, *node.db);
+			else
+				node.pt.doPartition(node.p1->pt, node.p2->pt);
+		}
+
+		vector<int> choiceVector = choice.toVector();
+		for (int i = 0; i < len; i++) {
+			int E = choiceVector[i];
+			AttributeSet Eset(1 << E);
+			//E belongs to X intersect RHS+(X)
+
+			AttributeSet X_E = node.as.substract(Eset);
+
+			map<AttributeSet, TANE_Node>::iterator it = pre.layer.find(X_E);
+
+			if (it->second.pt.cardinality() == node.pt.cardinality()) {
+				//new FD found 
+				//output
+				for (auto &t : X_E.toVector())
+					cout << t + 1 << " ";
+				cout << "->" << E + 1 << endl;
+
+				//remove E from RHS+ i is E 's index
+				node.RHS_plus.erase(E);
+
+				//remove F belongs to R \ X from RHS+ 
+
+				//a1 = R
+				AttributeSet a1;
+				for (int i = 0; i < total_attribute_count; i++) {
+					a1.insert(i);
+				}
+
+				//a2 = a1 - X = R - X
+				AttributeSet a2 = a1.substract(node.as);
+
+				//a3 = RHS+ - a2 = RHS+ - (R - X)
+				AttributeSet a3 = node.RHS_plus.substract(a2);
+
+				node.RHS_plus = a3;
+			}
+		}
+	}
+}
+
+void prune(int total_attribute_count, TANE_Layer &pre, TANE_Layer & cur) {
+	map<AttributeSet, TANE_Node>::iterator p_layer = cur.layer.begin();
+
+	while (p_layer != cur.layer.end()) {
+		if (p_layer->second.RHS_plus.size() == 0) {
+			cur.layer.erase(p_layer);
+			continue;
+		}
+
+		//X is a super key?
+
+		p_layer++;
+	}
+}
+
+void TANE_search_FD(int total_attribute_count, Database &db) {
+	TANE_Layer *pre;
+	TANE_Layer *cur;
+
+	pre = new TANE_Layer(true, total_attribute_count);
+	cur = new TANE_Layer(total_attribute_count, db);
+
+	while(cur->size()!=0) {
+		compute_dependecies(total_attribute_count, *pre, *cur);
+		prune(total_attribute_count, *pre, *cur);
+
+		delete pre;
+		pre = cur;
+
+		cur = new TANE_Layer(*pre, total_attribute_count);
+	}
+	
+	delete pre;
+	delete cur;
+}
