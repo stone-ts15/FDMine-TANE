@@ -1,0 +1,11 @@
+
+
+FDM/.vs/
+FDM/Debug/
+FDM/Release/
+
+*.vcxproj
+*.filters
+*.user
+
+FDM/ReadMining/data.txt
