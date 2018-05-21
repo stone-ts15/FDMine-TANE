@@ -1,5 +1,6 @@
 #include "Database.h"
 #include "AttributeSet.h"
+#include "DisjointSet.h"
 #include <fstream>
 #include <ctime>
 
@@ -36,10 +37,9 @@ void testattr() {
 	AttributeSet as(4);
 	
 }
-
 int main() {
 
-	testattr();
+	testds();
 	
 	system("pause");
 }
