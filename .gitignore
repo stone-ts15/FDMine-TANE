@@ -4,8 +4,8 @@ FDM/.vs/
 FDM/Debug/
 FDM/Release/
 
-*.vcxproj
-*.filters
-*.user
+FDM/ReadMining/*.vcxproj
+FDM/ReadMining/*.filters
+FDM/ReadMining/*.user
 
 FDM/ReadMining/data.txt
