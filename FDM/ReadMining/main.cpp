@@ -1,6 +1,6 @@
 #include "Database.h"
-#include "AttributeSet.h"
 #include "DisjointSet.h"
+// #include "TANE-tree.h"
 #include <fstream>
 #include <ctime>
 
@@ -34,7 +34,7 @@ void testdb() {
 }
 
 void testattr() {
-	AttributeSet as(4);
+	// AttributeSet as(4);
 	
 }
 int main() {
