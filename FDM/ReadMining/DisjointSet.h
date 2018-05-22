@@ -61,7 +61,6 @@ public:
 		int partitionCount = 0;
 		long long hashValue;
 
-
 		map<long long, int>* proots = new map<long long, int>;
 		map<long long, int>::iterator itFind;
 		for (int i = 0; i < size; ++i) {
