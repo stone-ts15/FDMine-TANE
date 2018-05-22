@@ -72,7 +72,7 @@ public:
 			hashValue = util::hashRoot(*root1, *root2);
 			itFind = proots->find(hashValue);
 			if (itFind == proots->end()) {
-				proots->insert(pair<int, int>(hashValue, partitionCount));
+				proots->insert(pair<long long, int>(hashValue, partitionCount));
 				vec.push_back(partitionCount);
 				++partitionCount;
 			}
