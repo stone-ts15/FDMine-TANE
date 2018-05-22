@@ -6,22 +6,31 @@ using std::vector;
 using std::cout;
 
 class DisjointSet {
+	// 优化：开array而不是vector
 public:
+	int sizeEC;
+private:
 	vector<int> vec;
+	
 
 public:
-	DisjointSet() {
+	DisjointSet() : sizeEC(0) {
 		
 	}
 	DisjointSet(unsigned size) : vec(size) {
-		init();
+		initTest();
+	}
+	void clear() {
+		vec.clear();
+		sizeEC = 0;
 	}
 	int* find(int i) {
 		// 优化：使用指针开vector，结束时释放
 		// 优化：使用while压缩路径
 		// 优化：不压缩路径
-		
+		// 优化：是否返回iterator
 		vector<int*> oldElems;
+		
 		int* root;
 		while (true) {
 			root = &(vec[i]);
@@ -42,38 +51,74 @@ public:
 		int *pRooti = find(i);
 		int *pRootj = find(j);
 
-		if (*pRooti <= *pRootj) {
-			*pRootj = *pRooti;
-		}
-		else {
-			*pRooti = *pRootj;
+		if (*pRooti != *pRootj) {
+			--sizeEC;
+			if (*pRooti < *pRootj) {
+				*pRootj = *pRooti;
+			}
+			else {
+				*pRooti = *pRootj;
+			}
 		}
 	}
 
-	friend DisjointSet& operator * (DisjointSet& ds1, DisjointSet& ds2) {
-		DisjointSet* pans = new DisjointSet();
+	friend DisjointSet& productOf (DisjointSet& ds1, DisjointSet& ds2) {
+		// 优化：返回指针，否则需要拷贝
+		DisjointSet* pResultSet = new DisjointSet();
 		int size = ds1.vec.size();
-		int root1, root2;
+		int *root1, *root2;
 
 		for (int i = 0; i < size; ++i) {
 			root1 = ds1.find(i);
 			root2 = ds2.find(i);
-			if (ds1.find(root2) == root1) {
-				pans->vec.push_back(root2);
+			if (*(ds1.find(*root2)) == *root1) {
+				pResultSet->vec.push_back(*root2);
 			}
-			else if (ds2.find(root1) == root2) {
-				pans->vec.push_back(root1);
+			else if (*(ds2.find(*root1)) == *root2) {
+				pResultSet->vec.push_back(*root1);
 			}
 			else {
-				pans->vec.push_back(-1);
+				pResultSet->vec.push_back(i);
 			}
 		}
 
-		return *pans;
+		return *pResultSet;
+	}
+
+	friend void getProductFrom(DisjointSet& ds1, DisjointSet& ds2, DisjointSet& result) {
+		int size = ds1.vec.size();
+		int *root1, *root2;
+		int sizeEC = 0;
+
+		for (int i = 0; i < size; ++i) {
+			root1 = ds1.find(i);
+			root2 = ds2.find(i);
+			if (*(ds1.find(*root2)) == *root1) {
+				result.append(*root2);
+				if (*root2 == i)
+					++sizeEC;
+			}
+			else if (*(ds2.find(*root1)) == *root2) {
+				result.append(*root1);
+				if (*root1 == i)
+					++sizeEC;
+			}
+			else {
+				result.append(i);
+				sizeEC++;
+			}
+		}
+
+		result.sizeEC = sizeEC;
+	}
+
+	void append(int val) {
+		vec.push_back(val);
 	}
 
 private:
-	void init() {
+	// just for test
+	void initTest() {
 		int count = 0;
 		for (auto &i : vec) {
 			i = count;
@@ -87,9 +132,9 @@ private:
 
 void testds() {
 	DisjointSet ds;
-	ds.vec.push_back(-100001);
+	ds.append(-100001);
 	for (int i = 0; i <= 100000; ++i) {
-		ds.vec.push_back(i);
+		ds.append(i);
 	}
 	/*
 	double start = clock();
@@ -97,21 +142,21 @@ void testds() {
 	*/
 
 	DisjointSet ds1, ds2;
-	ds1.vec.push_back(-3);
-	ds1.vec.push_back(0);
-	ds1.vec.push_back(0);
-	ds1.vec.push_back(-3);
-	ds1.vec.push_back(3);
-	ds1.vec.push_back(3);
+	ds1.append(0);
+	ds1.append(0);
+	ds1.append(0);
+	ds1.append(3);
+	ds1.append(3);
+	ds1.append(3);
 
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(0);
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(2);
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(4);
+	ds2.append(0);
+	ds2.append(0);
+	ds2.append(2);
+	ds2.append(2);
+	ds2.append(4);
+	ds2.append(4);
 
-	DisjointSet c = ds1 * ds2;
+	DisjointSet *c = &productOf(ds1, ds2);
 
 
 	double start = clock();
