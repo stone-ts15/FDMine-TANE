@@ -6,10 +6,12 @@
 #include <list>
 #include <string>
 #include <set>
+#include <array>
 using namespace std;
 
 namespace util {
 	const int hashRange = 10007;
+	const int collen = 99918;
 
 	int hashString(string str) {
 		int count = 0;
