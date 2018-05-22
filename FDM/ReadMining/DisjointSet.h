@@ -2,26 +2,25 @@
 #include "Util.h"
 #include <ctime>
 
-using std::vector;
-using std::cout;
-
 class DisjointSet {
+	// 优化：开array而不是vector
 public:
+	int sizeEC;
+private:
 	vector<int> vec;
-
 public:
-	DisjointSet() {
-		
-	}
-	DisjointSet(unsigned size) : vec(size) {
-		init();
+	DisjointSet() : sizeEC(0) {}
+	void clear() {
+		vec.clear();
+		sizeEC = 0;
 	}
 	int* find(int i) {
 		// 优化：使用指针开vector，结束时释放
 		// 优化：使用while压缩路径
 		// 优化：不压缩路径
-		
+		// 优化：是否返回iterator
 		vector<int*> oldElems;
+		
 		int* root;
 		while (true) {
 			root = &(vec[i]);
@@ -37,85 +36,53 @@ public:
 			i = *root;
 		}
 	}
-
 	void join(int i, int j) {
 		int *pRooti = find(i);
 		int *pRootj = find(j);
 
-		if (*pRooti <= *pRootj) {
-			*pRootj = *pRooti;
-		}
-		else {
-			*pRooti = *pRootj;
-		}
-	}
-
-	friend DisjointSet& operator * (DisjointSet& ds1, DisjointSet& ds2) {
-		DisjointSet* pans = new DisjointSet();
-		int size = ds1.vec.size();
-		int root1, root2;
-
-		for (int i = 0; i < size; ++i) {
-			root1 = ds1.find(i);
-			root2 = ds2.find(i);
-			if (ds1.find(root2) == root1) {
-				pans->vec.push_back(root2);
-			}
-			else if (ds2.find(root1) == root2) {
-				pans->vec.push_back(root1);
+		if (*pRooti != *pRootj) {
+			--sizeEC;
+			if (*pRooti < *pRootj) {
+				*pRootj = *pRooti;
 			}
 			else {
-				pans->vec.push_back(-1);
+				*pRooti = *pRootj;
 			}
 		}
-
-		return *pans;
 	}
+	void append(int val) {
+		vec.push_back(val);
+	}
+	void fromProduct(DisjointSet& ds1, DisjointSet& ds2) {
+		clear();
 
-private:
-	void init() {
-		int count = 0;
-		for (auto &i : vec) {
-			i = count;
-			++count;
+		int size = ds1.vec.size();
+		int *root1, *root2;
+		int partitionCount = 0;
+		int hashValue;
+		
+
+		map<long long, int>* proots;
+		map<long long, int>::iterator itFind;
+		for (int i = 0; i < size; ++i) {
+			// root1 = ds1.find(i);
+			// root2 = ds2.find(i);
+			root1 = &(ds1.vec[i]);
+			root2 = &(ds2.vec[i]);
+			hashValue = util::hashRoot(*root1, *root2);
+			itFind = proots->find(hashValue);
+			if (itFind == proots->end()) {
+				proots->insert(pair<int, int>(hashValue, partitionCount));
+				vec.push_back(partitionCount);
+				++partitionCount;
+			}
+			else {
+				vec.push_back(itFind->second);
+			}
+			
 		}
+		sizeEC = partitionCount;
+		
+		delete proots;
 	}
-
-	
-
 };
-
-void testds() {
-	DisjointSet ds;
-	ds.vec.push_back(-100001);
-	for (int i = 0; i <= 100000; ++i) {
-		ds.vec.push_back(i);
-	}
-	/*
-	double start = clock();
-	cout << std::endl << (clock() - start) / CLOCKS_PER_SEC;
-	*/
-
-	DisjointSet ds1, ds2;
-	ds1.vec.push_back(-3);
-	ds1.vec.push_back(0);
-	ds1.vec.push_back(0);
-	ds1.vec.push_back(-3);
-	ds1.vec.push_back(3);
-	ds1.vec.push_back(3);
-
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(0);
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(2);
-	ds2.vec.push_back(-2);
-	ds2.vec.push_back(4);
-
-	DisjointSet c = ds1 * ds2;
-
-
-	double start = clock();
-	// cout << ds.find(100000);
-
-	cout << std::endl << (clock() - start) / CLOCKS_PER_SEC;
-}
