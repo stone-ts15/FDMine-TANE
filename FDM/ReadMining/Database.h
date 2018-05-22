@@ -30,11 +30,6 @@ public:
 		char incstr[rowlen];
 		while (!is.eof()) {
 			is.getline(incstr, rowlen);
-			str = incstr;
-			if (lines.find(str) != lines.end()) {
-				cout << str << endl;
-				break;
-			}
 			if (*incstr)
 				parse(incstr);
 		}
