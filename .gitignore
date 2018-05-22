@@ -11,5 +11,8 @@ FDM/ReadMining/Release/
 FDM/ReadMining/*.vcxproj
 FDM/ReadMining/*.filters
 FDM/ReadMining/*.user
+FDM/ReadMining/result.txt
 
 FDM/ReadMining/data.txt
+
+FDM/ReadMining.sln
