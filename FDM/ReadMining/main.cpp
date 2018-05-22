@@ -23,6 +23,8 @@ void testdb() {
 
 	start = clock();
 	pdb->getTable(*pfin);
+	// DSPartition ds;
+	// ds.getPartitionFromTable(*pdb, AttributeSet(1));
 	TANE_search_FD(12, *pdb);
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
