@@ -1,7 +1,11 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <map>
+#include <list>
+#include <string>
+#include <set>
 using namespace std;
 
 namespace util {

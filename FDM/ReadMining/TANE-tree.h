@@ -1,10 +1,7 @@
 #pragma once
 #pragma once
-#include <vector>
-#include <map>
-#include <list>
-#include <string>
-#include <fstream>
+
+#include "Util.h"
 
 #include "Database.h"
 #include "DisjointSet.h"
@@ -68,6 +65,10 @@ public:
 			t = t >> 1;
 		}
 		return count;
+	}
+
+	void assign(AttributeSet &k) {
+		attribute_set = k.attribute_set;
 	}
 
 	void insert(int k) {
@@ -401,6 +402,8 @@ void calcualte_initial_RHS_plus(int total_attribute_count, TANE_Layer &pre, TANE
 
 void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer &cur,ofstream * of) {
 	calcualte_initial_RHS_plus(total_attribute_count, pre, cur);
+
+	AttributeSet R( (1 << total_attribute_count) - 1 );
 	
 	for (auto &layer_record : cur.layer) {
 
@@ -443,14 +446,8 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 
 				//remove F belongs to R \ X from RHS+ 
 
-				//a1 = R
-				AttributeSet a1;
-				for (int i = 0; i < total_attribute_count; i++) {
-					a1.insert(i);
-				}
-
-				//a2 = a1 - X = R - X
-				AttributeSet a2 = a1.substract(node.as);
+				//a2 = R - X
+				AttributeSet a2 = R.substract(node.as);
 
 				//a3 = RHS+ - a2 = RHS+ - (R - X)
 				AttributeSet a3 = node.RHS_plus.substract(a2);

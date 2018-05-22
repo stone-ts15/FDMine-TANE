@@ -61,7 +61,6 @@ public:
 		int partitionCount = 0;
 		long long hashValue;
 
-
 		map<long long, int>* proots = new map<long long, int>;
 		map<long long, int>::iterator itFind;
 		for (int i = 0; i < size; ++i) {
@@ -72,7 +71,7 @@ public:
 			hashValue = util::hashRoot(*root1, *root2);
 			itFind = proots->find(hashValue);
 			if (itFind == proots->end()) {
-				proots->insert(pair<int, int>(hashValue, partitionCount));
+				proots->insert(pair<long long, int>(hashValue, partitionCount));
 				vec.push_back(partitionCount);
 				++partitionCount;
 			}
