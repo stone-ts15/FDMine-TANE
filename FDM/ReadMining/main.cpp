@@ -23,6 +23,8 @@ void testdb() {
 
 	start = clock();
 	pdb->getTable(*pfin);
+	//return;
+	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 	TANE_search_FD(pdb->table.size(), *pdb);
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
