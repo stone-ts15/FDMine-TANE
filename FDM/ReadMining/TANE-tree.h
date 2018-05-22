@@ -200,28 +200,29 @@ public:
 		map<string, int> equivalenceClass;
 		vector<int> attrVec = attr.toVector();
 		map<string, int>::iterator itFind;
-		int count;
+		int partitionCount;
+		// only when 1 attr in AttributeSet
 		for (auto &index : attrVec) {
 			const list<string>& column = db.table[index];
-			count = 0;
+			partitionCount = 0;
 			equivalenceClass.clear();
 			for (auto& str : column) {
 				itFind = equivalenceClass.find(str);
 				if (itFind == equivalenceClass.end()) {
-					equivalenceClass.insert(pair<string, int>(str, count));
-					partition.append(count);
+					equivalenceClass.insert(pair<string, int>(str, partitionCount));
+					partition.append(partitionCount);
+					++partitionCount;
 					partition.sizeEC++;
 				}
 				else {
 					partition.append(itFind->second);
 				}
-				++count;
 			}
 		}
 	}
-
+	
 	void getPartitionFromProduct(DSPartition& p1, DSPartition& p2) {
-		getProductFrom(p1.partition, p2.partition, partition);
+		partition.fromProduct(p1.partition, p2.partition);
 	}
 };
 
