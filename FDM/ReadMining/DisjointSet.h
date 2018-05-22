@@ -55,20 +55,33 @@ public:
 	}
 	void fromProduct(DisjointSet& ds1, DisjointSet& ds2) {
 		clear();
+		
 
 		int size = ds1.vec.size();
-		int *root1, *root2;
+		int i;
+		DisjointSet* shortSet = NULL;
+		if (ds1.sizeEC == size || ds2.sizeEC == size) {
+			for (i = 0; i < size; ++i) {
+				vec.push_back(i);
+			}
+			sizeEC = size;
+			return;
+		}
+
+		int root1, root2;
 		int partitionCount = 0;
 		long long hashValue;
+		
 
 		map<long long, int>* proots = new map<long long, int>;
 		map<long long, int>::iterator itFind;
-		for (int i = 0; i < size; ++i) {
+		vector<int>::iterator it1, it2;
+		for (i = 0, it1 = ds1.vec.begin(), it2 = ds2.vec.begin(); i < size; ++i, ++it1, ++it2) {
 			// root1 = ds1.find(i);
 			// root2 = ds2.find(i);
-			root1 = &(ds1.vec[i]);
-			root2 = &(ds2.vec[i]);
-			hashValue = util::hashRoot(*root1, *root2);
+			root1 = *it1;
+			root2 = *it2;
+			hashValue = util::hashRoot(root1, root2);
 			itFind = proots->find(hashValue);
 			if (itFind == proots->end()) {
 				proots->insert(pair<long long, int>(hashValue, partitionCount));

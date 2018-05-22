@@ -434,10 +434,10 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 				//new FD found 
 				//output
 				for (auto &t : X_E.toVector()) {
-					cout << t + 1 << " ";
+					// cout << t + 1 << " ";
 					(*of) << t + 1 << " ";
 				}
-				cout << "-> " << E + 1 << endl;
+				// cout << "-> " << E + 1 << endl;
 				(*of) << "-> " << E + 1 << endl;
 
 
@@ -490,8 +490,10 @@ void TANE_search_FD(int total_attribute_count, Database &db) {
 
 	pre = new TANE_Layer(true, total_attribute_count);
 	cur = new TANE_Layer(total_attribute_count, db);
-
+	int layerCount = 0;
 	while(cur->size()!=0) {
+		cout << layerCount << endl;
+		++layerCount;
 		compute_dependecies(total_attribute_count, *pre, *cur, of);
 		prune(total_attribute_count, *pre, *cur);
 
