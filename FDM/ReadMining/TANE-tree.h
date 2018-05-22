@@ -4,6 +4,7 @@
 #include <map>
 #include <list>
 #include <string>
+#include <fstream>
 
 #include "Database.h"
 #include "DisjointSet.h"
@@ -36,7 +37,25 @@ public:
 	}
 
 	bool operator < (const AttributeSet &k) const {
-		return attribute_set < k.attribute_set;
+		// has low index attribute's set will be put in the front
+		unsigned int t = attribute_set;
+		unsigned int tk = k.attribute_set;
+		for (int i = 0; i < 32; i++) {
+			unsigned int t_1 = t & 1;
+			unsigned int tk_1 = tk & 1;
+			if (t_1 > tk_1) {
+				return true;
+			}
+			else if (t_1 < tk_1) {
+				return false;
+			}
+			else {
+				t = t >> 1;
+				tk = tk >> 1;
+			}
+		}
+
+		return false;
 	}
 
 	int size() {
@@ -85,6 +104,8 @@ public:
 		for (int i = 0; i < 32; i++) {
 			if ((t & 1) && (tk & 1))
 				count++;
+			else if ((t & 1) || (tk & 1))
+				break;
 
 			t = t >> 1;
 			tk = tk >> 1;
@@ -92,6 +113,9 @@ public:
 
 		if (count == sz - 1)
 			return true;
+		else 
+			return false;
+
 	}
 
 public:
@@ -189,7 +213,7 @@ public:
 	int cardinality() {
 		return partition.sizeEC;
 	}
-	
+
 
 	// read lines of <db> specified by <attr>, into this <ds>
 	void getPartitionFromTable(const Database& db, const AttributeSet& attr) {
@@ -220,7 +244,7 @@ public:
 			}
 		}
 	}
-	
+
 	void getPartitionFromProduct(DSPartition& p1, DSPartition& p2) {
 		partition.fromProduct(p1.partition, p2.partition);
 	}
@@ -375,7 +399,7 @@ void calcualte_initial_RHS_plus(int total_attribute_count, TANE_Layer &pre, TANE
 	}
 }
 
-void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer &cur) {
+void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer &cur,ofstream * of) {
 	calcualte_initial_RHS_plus(total_attribute_count, pre, cur);
 	
 	for (auto &layer_record : cur.layer) {
@@ -406,9 +430,13 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 			if (it->second.pt.cardinality() == node.pt.cardinality()) {
 				//new FD found 
 				//output
-				for (auto &t : X_E.toVector())
+				for (auto &t : X_E.toVector()) {
 					cout << t + 1 << " ";
-				cout << "->" << E + 1 << endl;
+					(*of) << t + 1 << " ";
+				}
+				cout << "-> " << E + 1 << endl;
+				(*of) << "-> " << E + 1 << endl;
+
 
 				//remove E from RHS+ i is E 's index
 				node.RHS_plus.erase(E);
@@ -435,20 +463,31 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 
 void prune(int total_attribute_count, TANE_Layer &pre, TANE_Layer & cur) {
 	map<AttributeSet, TANE_Node>::iterator p_layer = cur.layer.begin();
+	vector<map<AttributeSet, TANE_Node>::iterator> remove_set;
 
 	while (p_layer != cur.layer.end()) {
 		if (p_layer->second.RHS_plus.size() == 0) {
-			cur.layer.erase(p_layer);
-			continue;
+			//cur.layer.erase(p_layer);
+			//p_layer++;
+			//continue;
+
+			remove_set.push_back(p_layer);
 		}
 
 		//X is a super key?
 
 		p_layer++;
 	}
+
+	for (auto &layer_it : remove_set) {
+		cur.layer.erase(layer_it);
+	}
 }
 
 void TANE_search_FD(int total_attribute_count, Database &db) {
+
+	ofstream *of = new ofstream("result.txt");
+
 	TANE_Layer *pre;
 	TANE_Layer *cur;
 
@@ -456,8 +495,9 @@ void TANE_search_FD(int total_attribute_count, Database &db) {
 	cur = new TANE_Layer(total_attribute_count, db);
 
 	while(cur->size()!=0) {
-		compute_dependecies(total_attribute_count, *pre, *cur);
+		compute_dependecies(total_attribute_count, *pre, *cur, of);
 		prune(total_attribute_count, *pre, *cur);
+
 
 		delete pre;
 		pre = cur;
