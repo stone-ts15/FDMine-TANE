@@ -1,14 +1,5 @@
 #pragma once
-
-#include <iostream>
-#include <vector>
-#include <list>
-#include <string>
-#include <map>
-#include <thread>
-using namespace std;
-
-void calcSing(list<string>& vit, map<string, list<int>>& vitp);
+#include "Util.h"
 
 class Node {
 
@@ -34,9 +25,16 @@ public:
 
 public:
 	void getTable(istream& is) {
+		set<string> lines;
+		string str;
 		char incstr[rowlen];
 		while (!is.eof()) {
 			is.getline(incstr, rowlen);
+			str = incstr;
+			if (lines.find(str) != lines.end()) {
+				cout << str << endl;
+				break;
+			}
 			if (*incstr)
 				parse(incstr);
 		}
@@ -57,47 +55,4 @@ public:
 		}
 		it->push_back(string(pre, cur));
 	}
-
-	void calcEquivalenceClass() {
-		vector<list<string>>::iterator itt = table.begin();
-		vector<map<string, list<int>>>::iterator itp = partition.begin();
-		// map<string, list<int>>::iterator itmf;
-		// list<string>::iterator itl;
-		// int count;
-		vector<thread*> pts(table.size());
-		vector<thread*>::iterator ith = pts.begin();
-		for (; itt != table.end(); ++itt, ++itp, ++ith) {
-			// thread t(calcSing, itt);
-			*ith = new thread(calcSing, ref(*itt), ref(*itp));
-			(*ith)->detach();
-			// (*ith)->join();
-			/*for (count = 0, itl = itt->begin(); itl != itt->end(); ++itl, ++count) {
-				itmf = itp->find(*itl);
-				if (itmf == itp->end()) {
-					itp->insert(pair<string, list<int>>(*itl, list<int>(1, count)));
-				}
-				else {
-					itmf->second.push_back(count);
-				}
-			}*/
-		}
-	}
-
-	
 };
-
-void calcSing(list<string>& vit, map<string, list<int>>& vitp) {
-	// vector<map<string, list<int>>>::iterator itp = partition.begin();
-	map<string, list<int>>::iterator itmf;
-	list<string>::iterator itl;
-	int count;
-	for (count = 0, itl = vit.begin(); itl != vit.end(); ++itl, ++count) {
-		itmf = vitp.find(*itl);
-		if (itmf == vitp.end()) {
-			vitp.insert(pair<string, list<int>>(*itl, list<int>(1, count)));
-		}
-		else {
-			itmf->second.push_back(count);
-		}
-	}
-}

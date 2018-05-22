@@ -59,10 +59,10 @@ public:
 		int size = ds1.vec.size();
 		int *root1, *root2;
 		int partitionCount = 0;
-		int hashValue;
+		long long hashValue;
 		
 
-		map<long long, int>* proots;
+		map<long long, int>* proots = new map<long long, int>;
 		map<long long, int>::iterator itFind;
 		for (int i = 0; i < size; ++i) {
 			// root1 = ds1.find(i);
@@ -72,7 +72,7 @@ public:
 			hashValue = util::hashRoot(*root1, *root2);
 			itFind = proots->find(hashValue);
 			if (itFind == proots->end()) {
-				proots->insert(pair<int, int>(hashValue, partitionCount));
+				proots->insert(pair<long long, int>(hashValue, partitionCount));
 				vec.push_back(partitionCount);
 				++partitionCount;
 			}
