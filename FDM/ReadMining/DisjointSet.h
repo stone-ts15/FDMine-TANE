@@ -20,7 +20,7 @@ public:
 		// 优化：不压缩路径
 		// 优化：是否返回iterator
 		vector<int*> oldElems;
-		
+
 		int* root;
 		while (true) {
 			root = &(vec[i]);
@@ -59,10 +59,10 @@ public:
 		int size = ds1.vec.size();
 		int *root1, *root2;
 		int partitionCount = 0;
-		int hashValue;
-		
+		long long hashValue;
 
-		map<long long, int>* proots;
+
+		map<long long, int>* proots = new map<long long, int>;
 		map<long long, int>::iterator itFind;
 		for (int i = 0; i < size; ++i) {
 			// root1 = ds1.find(i);
@@ -79,10 +79,10 @@ public:
 			else {
 				vec.push_back(itFind->second);
 			}
-			
+
 		}
 		sizeEC = partitionCount;
-		
+
 		delete proots;
 	}
 };
