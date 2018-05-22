@@ -20,7 +20,7 @@ namespace util {
 		return sum % hashRange;
 	}
 
-	long long hashRoot(int root1, int root2) {
+	long long hashRoot(long long root1, long long root2) {
 		return (root1 << 17) + root2;
 	}
 }

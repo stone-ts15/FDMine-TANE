@@ -5,7 +5,7 @@
 #include <ctime>
 
 void testdb() {
-	bool test = true;
+	bool test = false;
 
 	Database *pdb;
 	ifstream *pfin;
@@ -56,6 +56,8 @@ void testhashpartition() {
 int main() {
 
 	testdb();
+	//cout << util::hashRoot(63564, 108630) << endl;
+	//cout << util::hashRoot(30796, 108630) << endl;
 	
 	system("pause");
 }
