@@ -6,6 +6,7 @@
 #include <string>
 
 #include "Database.h"
+#include "DisjointSet.h"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ public:
 	AttributeSet(unsigned int k) {
 		attribute_set = k;
 	}
+	AttributeSet(const AttributeSet& src) : attribute_set(src.attribute_set) {}
 
 	int operator [] (int index) {
 		unsigned int k = 1 << index;
@@ -57,7 +59,7 @@ public:
 		attribute_set = attribute_set & (~(1 << k));
 	}
 
-	vector<int> toVector() {
+	vector<int> toVector() const{
 		vector<int> vec;
 		unsigned t = attribute_set;
 		for (int i = 0; i < 32; i++) {
@@ -172,10 +174,61 @@ public:
 	}
 };
 
+// using disjoint set
+class DSPartition {
+public:
+	DisjointSet partition;
+	AttributeSet as;
+public:
+	DSPartition() : as(NULL) {}
+	DSPartition(const Database& db, const AttributeSet& attr) : as(attr) {
+		getPartitionFromTable(db, as);
+	}
+public:
+
+	int cardinality() {
+		return partition.sizeEC;
+	}
+	
+
+	// read lines of <db> specified by <attr>, into this <ds>
+	void getPartitionFromTable(const Database& db, const AttributeSet& attr) {
+		// 优化：toVector返回int*，减少一次赋值
+		// 优化：一次取出table的列or取多次
+		// 优化：每一列开新的map
+		// 优化：直接向map的end插入,*itFind = pair<>...
+		map<string, int> equivalenceClass;
+		vector<int> attrVec = attr.toVector();
+		map<string, int>::iterator itFind;
+		int count;
+		for (auto &index : attrVec) {
+			const list<string>& column = db.table[index];
+			count = 0;
+			equivalenceClass.clear();
+			for (auto& str : column) {
+				itFind = equivalenceClass.find(str);
+				if (itFind == equivalenceClass.end()) {
+					equivalenceClass.insert(pair<string, int>(str, count));
+					partition.append(count);
+					partition.sizeEC++;
+				}
+				else {
+					partition.append(itFind->second);
+				}
+				++count;
+			}
+		}
+	}
+
+	void getPartitionFromProduct(DSPartition& p1, DSPartition& p2) {
+		getProductFrom(p1.partition, p2.partition, partition);
+	}
+};
+
 class TANE_Node {
 public:
 	AttributeSet as;
-	Partition pt;
+	DSPartition pt;
 	AttributeSet RHS_plus;
 
 	Database * db = nullptr;
@@ -334,9 +387,9 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 
 		if (len > 0) {
 			if (node.db != nullptr)
-				node.pt.doPartition(node.as, *node.db);
+				node.pt.getPartitionFromTable(*node.db, node.as);
 			else
-				node.pt.doPartition(node.p1->pt, node.p2->pt);
+				node.pt.getPartitionFromProduct(node.p1->pt, node.p2->pt);
 		}
 
 		vector<int> choiceVector = choice.toVector();

@@ -1,6 +1,6 @@
 #include "Database.h"
-#include "AttributeSet.h"
 #include "DisjointSet.h"
+#include "TANE-tree.h"
 #include <fstream>
 #include <ctime>
 
@@ -23,23 +23,39 @@ void testdb() {
 
 	start = clock();
 	pdb->getTable(*pfin);
+	TANE_search_FD(12, *pdb);
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
-	start = clock();
-	pdb->calcEquivalenceClass();
-	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
+	//start = clock();
+	//pdb->calcEquivalenceClass();
+	//cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
-	cout << pdb->partition[12].size();
+	/*start = clock();
+	DSPartition *pp[15];
+	AttributeSet as;
+	for (unsigned i = 0; i < 15; ++i) {
+		as.clear();
+		as.insert(i);
+		pp[i] = new DSPartition(*pdb, as);
+	}
+	cout << (clock() - start) / CLOCKS_PER_SEC << endl;*/
+
+
+	//cout << pdb->partition[12].size();
 	// cout << pdb->table[0].size();
 }
 
 void testattr() {
-	AttributeSet as(4);
+	// AttributeSet as(4);
 	
+}
+
+void testhashpartition() {
+
 }
 int main() {
 
-	testds();
+	testdb();
 	
 	system("pause");
 }
