@@ -25,8 +25,9 @@ public:
 		return (k & attribute_set) >> index;
 	}
 
-	void operator = (AttributeSet &k) {
+	const AttributeSet& operator = (const AttributeSet &k) {
 		attribute_set = k.attribute_set;
+		return k;
 	}
 
 	bool operator == (const AttributeSet &k) const {
@@ -222,6 +223,8 @@ public:
 		// 优化：一次取出table的列or取多次
 		// 优化：每一列开新的map
 		// 优化：直接向map的end插入,*itFind = pair<>...
+		as = attr;
+
 		map<string, int> equivalenceClass;
 		vector<int> attrVec = attr.toVector();
 		map<string, int>::iterator itFind;
@@ -237,13 +240,11 @@ public:
 				itFind = equivalenceClass.find(str);
 				if (itFind == equivalenceClass.end()) {
 					equivalenceClass.insert(pair<string, int>(str, partitionCount));
-					//partition.append(partitionCount);
 					(*itAsgn) = partitionCount;
 					++partitionCount;
 					partition.sizeEC++;
 				}
 				else {
-					//partition.append(itFind->second);
 					(*itAsgn) = itFind->second;
 				}
 				++itAsgn;
