@@ -5,7 +5,7 @@
 #include <ctime>
 
 void testdb() {
-	bool test = true;
+	bool test = false;
 
 	Database *pdb;
 	ifstream *pfin;
@@ -23,6 +23,8 @@ void testdb() {
 
 	start = clock();
 	pdb->getTable(*pfin);
+	//return;
+	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 	TANE_search_FD(pdb->table.size(), *pdb);
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
@@ -56,6 +58,8 @@ void testhashpartition() {
 int main() {
 
 	testdb();
+	//cout << util::hashRoot(63564, 108630) << endl;
+	//cout << util::hashRoot(30796, 108630) << endl;
 	
 	system("pause");
 }

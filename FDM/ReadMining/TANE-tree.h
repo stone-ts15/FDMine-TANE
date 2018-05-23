@@ -25,8 +25,9 @@ public:
 		return (k & attribute_set) >> index;
 	}
 
-	void operator = (AttributeSet &k) {
+	const AttributeSet& operator = (const AttributeSet &k) {
 		attribute_set = k.attribute_set;
+		return k;
 	}
 
 	bool operator == (const AttributeSet &k) const {
@@ -138,7 +139,7 @@ typedef AttributeSet IndexSet;
 
 typedef vector<string> StringKey;
 
-class Partition {
+/*class Partition {
 public:
 	map<StringKey, IndexSet> partition;
 	AttributeSet * as;
@@ -197,7 +198,7 @@ public:
 	void doPartition(Partition &p1, Partition &p2) {
 		
 	}
-};
+};*/
 
 // using disjoint set
 class DSPartition {
@@ -222,26 +223,31 @@ public:
 		// 优化：一次取出table的列or取多次
 		// 优化：每一列开新的map
 		// 优化：直接向map的end插入,*itFind = pair<>...
+		as = attr;
+
 		map<string, int> equivalenceClass;
 		vector<int> attrVec = attr.toVector();
 		map<string, int>::iterator itFind;
+		partition.parr = new array<int, util::collen>();
+		array<int, util::collen>::iterator itAsgn = partition.parr->begin();
 		int partitionCount;
 		// only when 1 attr in AttributeSet
 		for (auto &index : attrVec) {
-			const list<string>& column = db.table[index];
+			const array<string, util::collen>& column = db.table[index];
 			partitionCount = 0;
 			equivalenceClass.clear();
 			for (auto& str : column) {
 				itFind = equivalenceClass.find(str);
 				if (itFind == equivalenceClass.end()) {
 					equivalenceClass.insert(pair<string, int>(str, partitionCount));
-					partition.append(partitionCount);
+					(*itAsgn) = partitionCount;
 					++partitionCount;
 					partition.sizeEC++;
 				}
 				else {
-					partition.append(itFind->second);
+					(*itAsgn) = itFind->second;
 				}
+				++itAsgn;
 			}
 		}
 	}
@@ -309,6 +315,7 @@ public:
 
 			temp.clear();
 		}
+		
 	}
 
 	void generate_next_level(TANE_Layer &pre, int total_attribute_count) {
@@ -434,10 +441,10 @@ void compute_dependecies(int total_attribute_count, TANE_Layer &pre, TANE_Layer 
 				//new FD found 
 				//output
 				for (auto &t : X_E.toVector()) {
-					cout << t + 1 << " ";
+					// cout << t + 1 << " ";
 					(*of) << t + 1 << " ";
 				}
-				cout << "-> " << E + 1 << endl;
+				// cout << "-> " << E + 1 << endl;
 				(*of) << "-> " << E + 1 << endl;
 
 
@@ -482,7 +489,7 @@ void prune(int total_attribute_count, TANE_Layer &pre, TANE_Layer & cur) {
 }
 
 void TANE_search_FD(int total_attribute_count, Database &db) {
-
+	Database *pdb = &db;
 	ofstream *of = new ofstream("result.txt");
 
 	TANE_Layer *pre;
@@ -490,8 +497,11 @@ void TANE_search_FD(int total_attribute_count, Database &db) {
 
 	pre = new TANE_Layer(true, total_attribute_count);
 	cur = new TANE_Layer(total_attribute_count, db);
-
+	int layerCount = 0;
+	
 	while(cur->size()!=0) {
+		cout << layerCount << endl;
+		++layerCount;
 		compute_dependecies(total_attribute_count, *pre, *cur, of);
 		prune(total_attribute_count, *pre, *cur);
 
@@ -500,6 +510,7 @@ void TANE_search_FD(int total_attribute_count, Database &db) {
 		pre = cur;
 
 		cur = new TANE_Layer(*pre, total_attribute_count);
+		
 	}
 	
 	delete pre;

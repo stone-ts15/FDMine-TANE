@@ -1,53 +1,52 @@
 #pragma once
 #include "Util.h"
 
-class Node {
-
-};
-
-class StringNode : public Node {
-
-};
-
-class IntNode : public Node {
-
-};
-
 class Database {
 public:
-	vector<list<string>> table;
-	vector<map<string, list<int>>> partition;
 	static const unsigned rowlen = 210;
+	vector<array<string, util::collen>> table;
+	array<string, util::collen>::iterator *itArrs;
+	int col;
 
 public:
 	Database() {}
-	Database(unsigned col) : table(col), partition(col) {}
+	Database(unsigned vcol) : col(vcol), table(vcol) {
+		itArrs = new array<string, util::collen>::iterator[col];
+		int i = 0;
+		for (auto &column : table) {
+			itArrs[i] = column.begin();
+			++i;
+		}
+	}
 
 public:
 	void getTable(istream& is) {
-		set<string> lines;
-		string str;
 		char incstr[rowlen];
 		while (!is.eof()) {
 			is.getline(incstr, rowlen);
-			if (*incstr)
+			if (*incstr) {
 				parse(incstr);
+			}
+				
 		}
 	}
 
 	void parse(const char* cstr) {
 		// to append one new row
-		vector<list<string>>::iterator it = table.begin();
 		string s;
 		const char *pre = cstr, *cur = cstr;
+		int index = 0;
+		
 		while (*cur) {
 			if (*cur == ',' && *(cur + 1) != ' ') {
-				it->push_back(string(pre, cur));
-				++it;
+				*(itArrs[index]) = string(pre, cur);
+				++(itArrs[index]);
+				index = (index + 1) % col;
 				pre = cur + 1;
 			}
 			++cur;
 		}
-		it->push_back(string(pre, cur));
+		*(itArrs[index]) = string(pre, cur);
+		++(itArrs[index]);
 	}
 };
