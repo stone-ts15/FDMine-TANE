@@ -364,9 +364,6 @@ public:
 					if (judge_set[A] == 1) {
 						//output X -> A
 						//B_vector == X
-						for (auto &x : B_vector) {
-							of << x << " ";
-						}
 
 						vector<int> X_vector = X.as.toVector();
 						for (auto &x : X_vector) {
@@ -374,9 +371,6 @@ public:
 						}
 
 						fds.push_back(FD(X_vector,A+1));
-
-						of << "-> ";
-						of << A << endl;
 					}
 
 				}
