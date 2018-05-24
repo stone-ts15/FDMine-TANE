@@ -150,7 +150,6 @@ public:
 	AttributeSet as;
 	//DSPartition pt;
 	ECSet pt;
-	AttributeSet RHS_plus;
 
 	Database * db = nullptr;
 	TANE_Node * p1 = nullptr;
@@ -159,9 +158,7 @@ public:
 	TANE_Node() {}
 	TANE_Node(bool blank, int total_attribute_count) {
 		if (blank == true) {
-			for (int i = 0; i < total_attribute_count; i++) {
-				RHS_plus.insert(i);
-			}
+
 		}
 	}
 	TANE_Node(AttributeSet &ast, Database &db) {
