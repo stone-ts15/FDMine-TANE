@@ -175,6 +175,11 @@ public:
 		this->p1 = &p1;
 		this->p2 = &p2;
 	}
+
+public:
+	bool is_super_key() {
+		return false;
+	}
 };
 
 class TANE_Layer {
