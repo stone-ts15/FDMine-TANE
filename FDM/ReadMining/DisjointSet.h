@@ -6,11 +6,13 @@ using namespace util;
 class DisjointSet {
 public:
 	int sizeEC;
+	int sizeNDEC;
 	array<int, collen>* parr;
 public:
 	DisjointSet() : sizeEC(0), parr(NULL) {}
 	~DisjointSet() {
-		delete parr;
+		if (parr)
+			delete parr;
 	}
 	void clear() {
 		sizeEC = 0;
@@ -61,8 +63,7 @@ public:
 
 			if (r == -1)
 				continue;
-			itD = singleRoots.find(r);
-			if (itD != singleRoots.end())
+			if (singleRoots.find(r) != singleRoots.end())
 				r = -1;
 		}
 
@@ -71,4 +72,164 @@ public:
 		hashRoots.clear();
 		singleRoots.clear();
 	}
+
+	void fromTable(const Database& db, int index) {
+		parr = new array<int, util::collen>();
+		unordered_map<string, pair<int, int>>::iterator itFind;
+		const array<string, util::collen>& column = db.table[index];
+		array<int, util::collen>::iterator itAsgn = parr->begin();
+		int row = 0;
+		int partitionCount = 0;
+		pair<int, int>* pInfo;
+		for (auto &str : column) {
+			itFind = smap.find(str);
+			if (itFind == smap.end()) {
+				smap[str] = pair<int, int>(hashRow(row), 0);
+				//++partitionCount;
+				*itAsgn = -1;
+			}
+			else {
+				pInfo = &(itFind->second);
+				if (pInfo->first < 0) {
+					pInfo->first = inverseHashRow(pInfo->first);
+					pInfo->second = partitionCount;
+					(*parr)[pInfo->first] = partitionCount;
+					++partitionCount;
+				}
+				*itAsgn = pInfo->second;
+			}
+
+			++row;
+			++itAsgn;
+		}
+		sizeNDEC = partitionCount;
+		sizeEC = smap.size();
+		//cout << index << ": " << sizeEC << endl;
+
+		/*int count = 0;
+		for (auto &i : *parr) {
+			if (i == 0 && count) {
+				cout << count + 1 << endl;
+				break;
+			}
+			++count;
+		}*/
+		smap.clear();
+	}
+};
+
+class PartSet {
+public:
+	vector<pair<int, int>> *pvec;
+	map<int, int> *pmap;
+	int sizeEC;
+public:
+	PartSet() : pvec(NULL), sizeEC(0) {}
+	~PartSet() {
+		if (pvec)
+			delete pvec;
+	}
+
+	void fromDatabase(const Database& db, int index) {
+		pmap = new map<int, int>();
+		int size = collen;
+		int row = 0;
+		int originRow;
+		const array<string, util::collen>& column = db.table[index];
+		//admap.clear();
+		unordered_map<string, int>::iterator itFind;
+		for (auto &str : column) {
+			itFind = admap.find(str);
+			if (itFind == admap.end()) {
+				admap.insert(pair<string, int>(str, hashRow(row)));
+			}
+			else {
+				--size;
+				// inverse
+				if (itFind->second < 0) {
+					originRow = inverseHashRow(itFind->second);
+					itFind->second = originRow;
+					pmap->insert(pair<int, int>(originRow, originRow));
+				}
+				else {
+					originRow = itFind->second;
+				}
+				pmap->insert(pair<int, int>(row, originRow));
+			}
+			++row;
+		}
+		sizeEC = size;
+		admap.clear();
+		cout << index << ": " << sizeEC - collen + pmap->size() << endl;
+	}
+
+	void fromProduct(const PartSet& ps1, const PartSet& ps2) {
+		// fake
+
+		// p1 = ps1.begin, p2 = ps2.begin
+		// while p1.row != p2.row:
+		//   drop min(p1, p2)
+		//   min(p1, p2)++
+		// (p1 == p2)
+		// hash = p1.root & p2.root
+		// if map.find(hash):
+		//   this.push(p1.row, map[hash])
+		// else:
+		//   this.push(p1.row, count)
+		//   ++count
+		// (reorder)
+		// drop distinct row
+		
+
+
+
+		singleRoots.clear();
+	}
+
+
+
+	/*void getPartitionFromTable(const Database& db, const AttributeSet& attr) {
+		// 优化：toVector返回int*，减少一次赋值
+		// 优化：一次取出table的列or取多次
+		// 优化：直接向map的end插入,*itFind = pair<>...
+		as = attr;
+		singleRoots.clear();
+		partition.parr = new array<int, util::collen>();
+
+		vector<int> attrVec = attr.toVector();
+		unordered_map<string, int>::iterator itFind;
+		array<int, util::collen>::iterator itAsgn = partition.parr->begin();
+		int partitionCount = 0;
+
+		// only when 1 attr in AttributeSet
+		for (auto &index : attrVec) {
+			const array<string, util::collen>& column = db.table[index];
+			partitionCount = 0;
+			equivalenceClass.clear();
+			for (auto& str : column) {
+				itFind = equivalenceClass.find(str);
+				if (itFind == equivalenceClass.end()) {
+					equivalenceClass.insert(pair<string, int>(str, partitionCount));
+					singleRoots.insert(partitionCount);
+					(*itAsgn) = partitionCount;
+					++partitionCount;
+				}
+				else {
+					(*itAsgn) = itFind->second;
+					singleRoots.erase(itFind->second);
+				}
+				++itAsgn;
+			}
+		}
+
+		for (auto &r : *partition.parr) {
+			if (singleRoots.find(r) != singleRoots.end())
+				r = -1;
+		}
+
+		partition.sizeEC = partitionCount;
+		equivalenceClass.clear();
+		singleRoots.clear();
+	}
+*/
 };

@@ -3,6 +3,7 @@
 #include "TANE-tree.h"
 #include <fstream>
 #include <ctime>
+#include "dfs.h"
 
 void testdb() {
 	bool test = false;
@@ -25,6 +26,9 @@ void testdb() {
 	pdb->getTable(*pfin);
 	//return;
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
+	//S st(15);
+	//st.loadds(pdb);
+	//st.test();
 	TANE_search_FD(pdb->table.size(), *pdb);
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
