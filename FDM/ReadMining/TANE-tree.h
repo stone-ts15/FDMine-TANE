@@ -149,6 +149,7 @@ class TANE_Node {
 public:
 	AttributeSet as;
 	//DSPartition pt;
+	ECSet pt;
 	AttributeSet RHS_plus;
 
 	Database * db = nullptr;

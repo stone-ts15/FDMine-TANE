@@ -224,3 +224,117 @@ public:
 	}
 */
 };
+
+class ECSet {
+public:
+	//vector<unordered_set<int>> equivalentClassSet;
+	vector<vector<int>> equivalentClassSet;
+	//unordered_set<int> *pCandidate;
+	//unordered_map<int, int> *pRoots;
+	int sizeEC;
+	int sizeNDEC;
+public:
+	ECSet() : sizeEC(0), sizeNDEC(collen) {
+
+	}
+public:
+	int cardinality() {
+		return sizeEC;
+	}
+	void fromTable(const Database& db, int index, unordered_map<string, int>& colmap) {
+		//array<string, util::collen>::const_iterator it = db.table[index].cbegin();
+		const array<string, util::collen>& column = db.table[index];
+		unordered_map<string, int>::iterator itFind;
+		vector<int> *newset = NULL;
+		int row = 0;
+		sizeNDEC = 0;
+		int hashedRow;
+
+		for (auto &str : column) {
+			itFind = colmap.find(str);
+			if (itFind == colmap.end()) {
+				colmap[str] = hashRow(row);
+			}
+			else {
+				hashedRow = itFind->second;
+				if (hashedRow < 0) {
+					newset = new vector<int>();
+					newset->push_back(inverseHashRow(hashedRow));
+					newset->push_back(row);
+					equivalentClassSet.push_back(*newset);
+					itFind->second = sizeNDEC;
+					++sizeNDEC;
+				}
+				else {
+					equivalentClassSet[hashedRow].push_back(row);
+				}
+			}
+
+			++row;
+		}
+
+		//sizeNDEC = equivalentClassSet.size();
+		sizeEC = colmap.size();
+	}
+
+	void fromProduct(const ECSet& ecs1, const ECSet& ecs2, vector<int>& pRoots) {
+		if (ecs1.sizeNDEC == 0 || ecs2.sizeNDEC == 0) {
+			sizeNDEC = 0;
+			sizeEC = collen;
+			return;
+		}
+		equivalentClassSet.clear();
+		//unordered_map<int, int>::iterator itFind;
+
+		// S
+		//unordered_set<int> *pCandidate = new unordered_set<int>[ecs1.sizeNDEC];
+		vector<int> *pCandidate = new vector<int>[ecs1.sizeNDEC];
+
+		// T
+		//int *pRoots = new int[collen];
+		
+		
+		//memset(pRoots, 0, sizeof(pRoots));
+		int root;
+		unordered_set<int> *origin;
+		int inecCount = 0;
+
+		int ec1ID = 0, ec2ID = 0;
+		for (auto &ec : ecs1.equivalentClassSet) {
+			for (auto &row : ec) {
+				//(*pRoots)[row] = ec1ID;
+				pRoots[row] = ec1ID;
+			}
+			++ec1ID;
+		}
+
+		for (auto &ec : ecs2.equivalentClassSet) {
+			for (auto &row : ec) {
+				//itFind = pRoots->find(row);
+				//if (itFind != pRoots->end()) {
+				//	pCandidate[itFind->second].insert(row);
+				//}
+				root = pRoots[row];
+				if (root != -1) {
+					pCandidate[root].push_back(row);
+				}
+			}
+			for (auto &row : ec) {
+				root = pRoots[row];
+				if (root != -1) {
+					//origin = pCandidate + root;
+					if (pCandidate[root].size() >= 2) {
+						equivalentClassSet.push_back(pCandidate[root]);
+						inecCount += pCandidate[root].size();
+					}
+					pCandidate[root].clear();
+				}
+			}
+		}
+
+		sizeNDEC = equivalentClassSet.size();
+		sizeEC = collen - inecCount;
+		delete[] pCandidate;
+		//delete pRoots;
+	}
+};

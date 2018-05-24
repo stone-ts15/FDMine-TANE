@@ -3,9 +3,11 @@ FDM/*.sln
 FDM/.vs/
 FDM/Debug/
 FDM/Release/
+FDM/x64/
 
 FDM/ReadMining/Debug/
 FDM/ReadMining/Release/
+FDM/ReadMining/x64/
 
 
 FDM/ReadMining/*.vcxproj
