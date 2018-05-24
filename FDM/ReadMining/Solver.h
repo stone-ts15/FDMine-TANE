@@ -236,11 +236,7 @@ public:
 
 			choice = node_RHS_plus.intersect(node.as);
 
-			len = choice.size();
-
-			
-			
-			if (len > 0) {
+			if (choice.attribute_set != 0) {
 				if (node.db != nullptr)
 					//node.pt.getPartitionFromTable(*node.db, node.as);
 					node.pt.fromTable(*(node.db), node.as.toVector()[0], pColmaps[node.as.toVector()[0]]);
@@ -254,13 +250,9 @@ public:
 					
 			}
 			
-
 			choiceVector = choice.toVector();
 			
-
-			for (int i = 0; i < len; i++) {
-				int E = choiceVector[i];
-				//Eset.insert(E);
+			for (auto &E : choiceVector) {
 
 				//E belongs to X intersect RHS+(X)
 
@@ -274,10 +266,7 @@ public:
 					//new FD found 
 					//output
 					vector<int> X_E_vector = X_E.toVector();
-					//for (auto &t : X_E_vector) {
-					//	of << t + 1 << " ";
-					//}
-					//of << "-> " << E + 1 << endl;
+
 					for (auto &t : X_E_vector) {
 						t = t + 1;
 					}
