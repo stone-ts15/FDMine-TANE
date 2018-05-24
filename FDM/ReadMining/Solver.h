@@ -13,16 +13,19 @@ public:
 	unordered_map<long long, int> gmap;
 	//array<int, 4> initHashArg;
 	unordered_set<int> superKey;
+	int sc;
+	unordered_map<string, int>* pColmaps;
+	vector<int> *pcRoots;
 public:
 	Solver(int vcol) : col(vcol), pdb(NULL){
 		pds = new DisjointSet[vcol];
-		//initHashArg = { 0, 0, 0, 0 };
 	}
 
-	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), pds(NULL) {
+	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), pds(NULL), pcRoots(NULL) {
 		pds = new DisjointSet[col];
-		//initHashArg = { 0, 0, 0, 0 };
-		loadInitialColumn(pdb);
+		pColmaps = new unordered_map<string, int>[col];
+		//loadInitialColumn(pdb);
+		sc = 0;
 	}
 
 	void loadInitialColumn(Database* vpdb) {
@@ -33,10 +36,14 @@ public:
 	}
 
 	bool searchSingle(const AttributeSet& left, const AttributeSet& right, unordered_set<int>& sk) {
+		
+		
 		for (auto &s : sk) {
 			if (!((s & left.attribute_set) ^ s) )
 				return true;
 		}
+		
+		
 		if (left.attribute_set == 0)
 			return false;
 
@@ -44,6 +51,7 @@ public:
 		int size = leftAttrs.size();
 		vector<DisjointSet*> leftds;
 		int i, j, k;
+		int rv;
 
 		for (i = 0; i < size; ++i) {
 			if (pds[leftAttrs[i]].sizeEC == 0)
@@ -68,7 +76,7 @@ public:
 		long long hashValue;
 		//array<int, 4> hashArg(initHashArg);
 
-
+		++sc;
 		long long *pargs = new long long[4]{ 0 };
 		
 		bool pass;
@@ -87,12 +95,14 @@ public:
 			// hashValue = hashn(hashArg);
 			hashValue = hashn(pargs);
 			itFind = gmap.find(hashValue);
+			rv = *rGroup;
 			if (itFind == gmap.end()) {
-				gmap[hashValue] = *rGroup;
+				//gmap[hashValue] = *rGroup;
+				gmap.insert(pair<long long, int>(hashValue, rv));
 			}
 			else {
 				issuper = false;
-				if (itFind->second != *rGroup || *rGroup == -1) {
+				if (rv == -1 || itFind->second != rv) {
 					gmap.clear();
 					return false;
 				}
@@ -101,6 +111,7 @@ public:
 		gmap.clear();
 		if (issuper)
 			sk.insert(left.attribute_set);
+			
 		return true;
 	}
 
@@ -120,36 +131,41 @@ public:
 	}
 
 	void calcualte_initial_RHS_plus(TANE_Layer &pre, TANE_Layer &cur) {
+		vector<int> asVector;
+		AttributeSet result;
+		AttributeSet temp;
+		AttributeSet t;
+		map<AttributeSet, TANE_Node>::iterator it;
+		int len;
 		for (auto &layer_record : cur.layer) {
 
 			TANE_Node &node = layer_record.second;
 
-			int len = node.as.size();
+			len = node.as.size();
 
 			node.RHS_plus.clear();
-
-			vector<int> asVector = node.as.toVector();
-			AttributeSet result;
+			asVector = node.as.toVector();
+			
 			for (int i = 0; i < len; i++) {
-				AttributeSet temp = node.as;
+				temp = node.as;
 				temp.erase(asVector[i]);
 
-				map<AttributeSet, TANE_Node>::iterator it = pre.layer.find(temp);
+				it = pre.layer.find(temp);
 
 				if (it == pre.layer.end()) {
 					result.clear();
 					break;
 				}
 
-				AttributeSet t = it->second.RHS_plus;
+				t = it->second.RHS_plus;
 
 				if (i == 0) {
 					result = t;
 				}
 				else {
 					// result = result intersect RHS( X - E )
-					AttributeSet a = t.intersect(result);
-					result = a;
+					//AttributeSet a = ;
+					result = t.intersect(result);
 
 					// if result = \phi break;
 					if (result.size() == 0)
@@ -165,38 +181,54 @@ public:
 		calcualte_initial_RHS_plus(pre, cur);
 
 		AttributeSet R((1 << col) - 1);
+		AttributeSet choice;
+		int len;
+		vector<int> choiceVector;
+		map<AttributeSet, TANE_Node>::iterator it;
+		AttributeSet X_E;
+		AttributeSet Eset;
 
 		for (auto &layer_record : cur.layer) {
 
 			TANE_Node &node = layer_record.second;
 
-			AttributeSet choice = node.RHS_plus.intersect(node.as);
+			choice = node.RHS_plus.intersect(node.as);
 
-			int len = choice.size();
+			len = choice.size();
 
-			/*
+			
 			
 			if (len > 0) {
 				if (node.db != nullptr)
-					node.pt.getPartitionFromTable(*node.db, node.as);
-				else
-					node.pt.getPartitionFromProduct(node.p1->pt, node.p2->pt);
+					//node.pt.getPartitionFromTable(*node.db, node.as);
+					node.pt.fromTable(*(node.db), node.as.toVector()[0], pColmaps[node.as.toVector()[0]]);
+				else {
+					//node.pt.getPartitionFromProduct(node.p1->pt, node.p2->pt);
+					pcRoots = new vector<int>(collen, -1);
+					node.pt.fromProduct(node.p1->pt, node.p2->pt, *pcRoots);
+					//cout << node.as.toVector()[0]
+					delete pcRoots;
+				}
+					
 			}
-			*/
+			
 
-			vector<int> choiceVector = choice.toVector();
+			choiceVector = choice.toVector();
+			
+
 			for (int i = 0; i < len; i++) {
 				int E = choiceVector[i];
-				AttributeSet Eset(1 << E);
+				//Eset.insert(E);
+				Eset = 1 << E;
 				//E belongs to X intersect RHS+(X)
 
-				AttributeSet X_E = node.as.substract(Eset);
+				X_E = node.as.substract(Eset);
 
-				map<AttributeSet, TANE_Node>::iterator it = pre.layer.find(X_E);
+				it = pre.layer.find(X_E);
 
-				// if (it->second.pt.cardinality() == node.pt.cardinality()) {
+				if (it->second.pt.cardinality() == node.pt.cardinality()) {
 				
-				if (searchSingle(X_E, Eset, superKey)) {
+				//if (searchSingle(X_E, Eset, superKey)) {
 					//new FD found 
 					//output
 					for (auto &t : X_E.toVector()) {
@@ -213,12 +245,13 @@ public:
 					//remove F belongs to R \ X from RHS+ 
 
 					//a2 = R - X
-					AttributeSet a2 = R.substract(node.as);
+					//AttributeSet a2 = R.substract(node.as);
 
 					//a3 = RHS+ - a2 = RHS+ - (R - X)
-					AttributeSet a3 = node.RHS_plus.substract(a2);
+					//AttributeSet a3 = node.RHS_plus.substract(a2);
 
-					node.RHS_plus = a3;
+					//node.RHS_plus = a3;
+					node.RHS_plus = node.RHS_plus.substract(R.substract(node.as));
 				}
 			}
 		}
@@ -262,11 +295,13 @@ public:
 			cout << layerCount << endl;
 			++layerCount;
 			compute_dependecies(col, *pre, *cur, of);
+
 			prune(*pre, *cur);
 
 			delete pre;
 			pre = cur;
 			cur = new TANE_Layer(*pre, col);
+
 		}
 
 		delete pre;
@@ -275,5 +310,16 @@ public:
 
 	void solve() {
 		TANE_search_FD();
+		/*
+		ECSet pts[15];
+		for (int i = 0; i < 15; ++i) {
+			pts[i].fromTable(*pdb, i, pColmaps[i]);
+			//cout << i << " " << pts[i].sizeEC << " " << pts[i].sizeNDEC << endl;
+		}
+
+		ECSet p12;
+		p12.fromProduct(pts[0], pts[1]);
+		cout << sc << endl;
+		*/
 	}
 };

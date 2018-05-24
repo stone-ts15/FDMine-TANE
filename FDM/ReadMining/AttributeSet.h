@@ -119,15 +119,15 @@ public:
 	}
 
 public:
-	AttributeSet intersect(AttributeSet &b) {
+	AttributeSet intersect(const AttributeSet &b) {
 		return AttributeSet(attribute_set & b.attribute_set);
 	}
 
-	AttributeSet combine(AttributeSet &b) {
+	AttributeSet combine(const AttributeSet &b) {
 		return AttributeSet(attribute_set | b.attribute_set);
 	}
 
-	AttributeSet substract(AttributeSet &b) {
+	AttributeSet substract(const AttributeSet &b) {
 		unsigned int temp = ~b.attribute_set;
 		return AttributeSet(attribute_set & temp);
 	}
