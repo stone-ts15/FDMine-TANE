@@ -71,10 +71,10 @@ static bool cmp_lt(FD & a, FD & b) {
 	}
 
 	if (la < lb) {
-		return false;
+		return true;
 	}
 	else if (la > lb) {
-		return true;
+		return false;
 	}
 	else {
 		return a.r < b.r;
