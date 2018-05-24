@@ -5,6 +5,45 @@
 #include "TANE-tree.h"
 #include "AttributeSet.h"
 
+class FD {
+public:
+	vector<int> l;
+	int r;
+public:
+	FD() {}
+	FD(vector<int> &a, int b): l(a),r(b){}
+};
+
+static bool cmp_lt(FD & a, FD & b) {
+	int la = a.l.size();
+	int lb = b.l.size();
+
+	int i = 0;
+	while (i < la && i < lb) {
+		if (a.l[i] < b.l[i]) {
+			return true;
+		}
+		else if (a.l[i] > b.l[i]) {
+			return false;
+		}
+		else {
+			i++;
+		}
+	}
+
+	if (la < lb) {
+		return false;
+	}
+	else if (la > lb) {
+		return true;
+	}
+	else {
+		return a.r < b.r;
+	}
+}
+
+
+
 class Solver {
 public:
 	int col;
@@ -16,6 +55,9 @@ public:
 	int sc;
 	unordered_map<string, int>* pColmaps;
 	vector<int> *pcRoots;
+
+
+	vector<FD> fds;
 public:
 	Solver(int vcol) : col(vcol), pdb(NULL){
 		pds = new DisjointSet[vcol];
@@ -231,12 +273,16 @@ public:
 				//if (searchSingle(X_E, Eset, superKey)) {
 					//new FD found 
 					//output
-					for (auto &t : X_E.toVector()) {
-						// cout << t + 1 << " ";
-						of << t + 1 << " ";
+					vector<int> X_E_vector = X_E.toVector();
+					//for (auto &t : X_E_vector) {
+					//	of << t + 1 << " ";
+					//}
+					//of << "-> " << E + 1 << endl;
+					for (auto &t : X_E_vector) {
+						t = t + 1;
 					}
-					// cout << "-> " << E + 1 << endl;
-					of << "-> " << E + 1 << endl;
+					fds.push_back(FD(X_E_vector, E + 1));
+
 
 
 					//remove E from RHS+ i is E 's index
@@ -321,9 +367,17 @@ public:
 						// A in judeg_set = intersect { RHS+(X+A-B) }
 						if (judge_set[A] == 1) {
 							//output X -> A
+							//B_vector == X
 							for (auto &x : B_vector) {
 								of << x << " ";
 							}
+
+							vector<int> X_vector = X.toVector();
+							for (auto &x : X_vector) {
+								x = x+1;
+							}
+
+							fds.push_back(FD(X_vector,A+1));
 
 							of << "-> ";
 							of << A << endl;
@@ -371,6 +425,9 @@ public:
 
 		delete pre;
 		delete cur;
+
+		sort_FDs();
+		print_FDs(of);
 	}
 
 	void solve() {
@@ -386,5 +443,20 @@ public:
 		p12.fromProduct(pts[0], pts[1]);
 		cout << sc << endl;
 		*/
+	}
+
+	void sort_FDs() {
+		std::sort(fds.begin(), fds.end(), cmp_lt);
+	}
+
+	void print_FDs(ofstream &of) {
+		for (auto &fd : fds) {
+			for (auto &lv : fd.l) {
+				of << lv << " ";
+			}
+
+			of << "->";
+			of << " " << fd.r << endl;
+		}
 	}
 };
