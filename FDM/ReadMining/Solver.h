@@ -5,6 +5,44 @@
 #include "TANE-tree.h"
 #include "AttributeSet.h"
 
+map<AttributeSet, AttributeSet> RHS_plus_map;
+
+AttributeSet& get_RHS_plus(AttributeSet & k) {
+	//try to find 
+	AttributeSet X = k;
+	map<AttributeSet, AttributeSet>::iterator it = RHS_plus_map.find(X);
+
+	if (it != RHS_plus_map.end()) {
+		return (*it).second;
+	}
+
+	vector<int> X_choices = X.toVector();
+
+	AttributeSet result;
+	bool first = true;
+
+	for (auto &A : X_choices) {
+		X.erase(A);
+		
+		AttributeSet X_A_RHS_plus = get_RHS_plus(X);
+
+		if (first) {
+			result = X_A_RHS_plus;
+		}
+		else {
+			result = result.intersect(X_A_RHS_plus);
+		}
+
+		X.insert(A);
+	}
+
+	RHS_plus_map.insert(pair<AttributeSet, AttributeSet>(X, result));
+	
+	it = RHS_plus_map.find(X);
+
+	return (*it).second;
+}
+
 class Solver {
 public:
 	int col;
