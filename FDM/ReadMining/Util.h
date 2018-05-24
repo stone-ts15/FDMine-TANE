@@ -42,11 +42,11 @@ namespace util {
 		return -hashrow - 1;
 	}
 
-	long long hashn(long long arg0, long long arg1, long long arg2, long long arg3) {
-		return (arg0 << 39) + (arg1 << 26) + (arg2 << 13) + arg3;
-	}
-
 	long long hashn(array<int, 4>& arg) {
 		return (((long long)arg[0]) << 39) + (((long long)arg[1]) << 26) + (((long long)arg[2]) << 13) + arg[3];
+	}
+
+	long long hashn(long long* args) {
+		return (args[0] << 39) | (args[1] << 26) | (args[2] << 13) | args[3];
 	}
 }
