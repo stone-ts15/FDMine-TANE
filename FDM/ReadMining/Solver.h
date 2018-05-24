@@ -7,7 +7,7 @@
 
 map<AttributeSet, AttributeSet> RHS_plus_map;
 
-AttributeSet& get_RHS_plus(AttributeSet & k) {
+AttributeSet& get_RHS_plus(AttributeSet k) {
 	//try to find 
 	AttributeSet X = k;
 	map<AttributeSet, AttributeSet>::iterator it = RHS_plus_map.find(X);
@@ -28,6 +28,7 @@ AttributeSet& get_RHS_plus(AttributeSet & k) {
 
 		if (first) {
 			result = X_A_RHS_plus;
+			first = false;
 		}
 		else {
 			result = result.intersect(X_A_RHS_plus);
@@ -169,49 +170,11 @@ public:
 	}
 
 	void calcualte_initial_RHS_plus(TANE_Layer &pre, TANE_Layer &cur) {
-		vector<int> asVector;
-		AttributeSet result;
-		AttributeSet temp;
-		AttributeSet t;
-		map<AttributeSet, TANE_Node>::iterator it;
-		int len;
 		for (auto &layer_record : cur.layer) {
 
 			TANE_Node &node = layer_record.second;
 
-			len = node.as.size();
-
-			node.RHS_plus.clear();
-			asVector = node.as.toVector();
-			
-			for (int i = 0; i < len; i++) {
-				temp = node.as;
-				temp.erase(asVector[i]);
-
-				it = pre.layer.find(temp);
-
-				if (it == pre.layer.end()) {
-					result.clear();
-					break;
-				}
-
-				t = it->second.RHS_plus;
-
-				if (i == 0) {
-					result = t;
-				}
-				else {
-					// result = result intersect RHS( X - E )
-					//AttributeSet a = ;
-					result = t.intersect(result);
-
-					// if result = \phi break;
-					if (result.size() == 0)
-						break;
-				}
-			}
-
-			node.RHS_plus = result;
+			get_RHS_plus(node.as);
 		}
 	}
 
@@ -228,8 +191,9 @@ public:
 		for (auto &layer_record : cur.layer) {
 
 			TANE_Node &node = layer_record.second;
+			AttributeSet & node_RHS_plus = get_RHS_plus(node.as);
 
-			choice = node.RHS_plus.intersect(node.as);
+			choice = node_RHS_plus.intersect(node.as);
 
 			len = choice.size();
 
@@ -265,8 +229,7 @@ public:
 				it = pre.layer.find(X_E);
 
 				if (it->second.pt.cardinality() == node.pt.cardinality()) {
-				
-				//if (searchSingle(X_E, Eset, superKey)) {
+
 					//new FD found 
 					//output
 					for (auto &t : X_E.toVector()) {
@@ -278,7 +241,7 @@ public:
 
 
 					//remove E from RHS+ i is E 's index
-					node.RHS_plus.erase(E);
+					node_RHS_plus.erase(E);
 
 					//remove F belongs to R \ X from RHS+ 
 
@@ -289,7 +252,7 @@ public:
 					//AttributeSet a3 = node.RHS_plus.substract(a2);
 
 					//node.RHS_plus = a3;
-					node.RHS_plus = node.RHS_plus.substract(R.substract(node.as));
+					node_RHS_plus = node_RHS_plus.substract(R.substract(node.as));
 				}
 			}
 		}
@@ -301,25 +264,23 @@ public:
 
 		while (p_layer != cur.layer.end()) {
 			TANE_Node &X = p_layer->second;
+			AttributeSet &X_RHS_plus = get_RHS_plus(X.as);
 
 			bool X_removed = false;
 
-			if (X.RHS_plus.size() == 0) {
-				//cur.layer.erase(p_layer);
-				//p_layer++;
-				//continue;
-
+			if (X_RHS_plus.size() == 0) {
 				X_removed = true;
 				remove_set.push_back(p_layer);
 			}
 
 			//X is a super key?
-			/*if (X.is_super_key()) {
+			if (X.is_super_key()) {
 
-				AttributeSet A_choices = X.RHS_plus.substract(X.as);
+				AttributeSet &X_RHS_plus = get_RHS_plus(X.as);
+
+				AttributeSet A_choices = X_RHS_plus.substract(X.as);
 
 				vector<int> A_choices_vector = A_choices.toVector();
-
 
 				// A belongs to RHS+(X) - X
 				for (auto &A : A_choices_vector) {
@@ -335,45 +296,39 @@ public:
 					for (auto &B : B_vector) {
 						// t = X + A - B
 						t.erase(B);
-						
-						map<AttributeSet,TANE_Node>::iterator it = cur.layer.find(t);
 
-						if (it != cur.layer.end()) {
-							if (first_RHS == true) {
-								judge_set = (*it).second.RHS_plus;
-								first_RHS = false;
-							}
-							judge_set = judge_set.intersect((*it).second.RHS_plus);
+						//RHS+ (X + A -B)
+						AttributeSet &r = get_RHS_plus(t);
 
-							if (judge_set.attribute_set == 0) {
-								break;
-							}
+						if (first_RHS == true) {
+							judge_set = r;
+							first_RHS = false;
 						}
-						else {
-							blank_RHS = true;
+						else
+							judge_set = judge_set.intersect(r);
+
+						if (judge_set.attribute_set == 0) {
 							break;
 						}
+
+						t.insert(B);
 					}
 
-					if (!blank_RHS) {
-						// A in judeg_set = intersect { RHS+(X+A-B) }
-						if (judge_set[A] == 1) {
-							//output X -> A
-							for (auto &x : B_vector) {
-								of << x << " ";
-							}
-
-							of << "-> ";
-							of << A << endl;
+					// A in judeg_set = intersect { RHS+(X+A-B) }
+					if (judge_set[A] == 1) {
+						//output X -> A
+						for (auto &x : B_vector) {
+							of << x << " ";
 						}
+
+						of << "-> ";
+						of << A << endl;
 					}
-
 				}
-
 				if (!X_removed)
 					remove_set.push_back(p_layer);
-			}*/
-			
+				
+			}
 
 			p_layer++;
 		}
@@ -390,6 +345,7 @@ public:
 		TANE_Layer *pre;
 		TANE_Layer *cur;
 
+		RHS_plus_map.insert(pair<AttributeSet, AttributeSet>(AttributeSet(0), AttributeSet((1 << col) - 1)));
 		pre = new TANE_Layer(true, col);
 		cur = new TANE_Layer(col, *pdb);
 		int layerCount = 0;
@@ -400,7 +356,7 @@ public:
 			compute_dependecies(col, *pre, *cur, of);
 
 			prune(*pre, *cur, of);
-
+			
 			delete pre;
 			pre = cur;
 			cur = new TANE_Layer(*pre, col);
