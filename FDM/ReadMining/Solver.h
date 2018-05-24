@@ -224,20 +224,85 @@ public:
 		}
 	}
 
-	void prune(TANE_Layer &pre, TANE_Layer & cur) {
+	void prune(TANE_Layer &pre, TANE_Layer & cur, ofstream& of) {
 		map<AttributeSet, TANE_Node>::iterator p_layer = cur.layer.begin();
 		vector<map<AttributeSet, TANE_Node>::iterator> remove_set;
 
 		while (p_layer != cur.layer.end()) {
-			if (p_layer->second.RHS_plus.size() == 0) {
+			TANE_Node &X = p_layer->second;
+
+			bool X_removed = false;
+
+			if (X.RHS_plus.size() == 0) {
 				//cur.layer.erase(p_layer);
 				//p_layer++;
 				//continue;
 
+				X_removed = true;
 				remove_set.push_back(p_layer);
 			}
 
 			//X is a super key?
+			if (X.is_super_key()) {
+
+				AttributeSet A_choices = X.RHS_plus.substract(X.as);
+
+				vector<int> A_choices_vector = A_choices.toVector();
+
+
+				// A belongs to RHS+(X) - X
+				for (auto &A : A_choices_vector) {
+					bool first_RHS = true;
+					bool blank_RHS = false;
+
+					AttributeSet judge_set;
+					// judge set = forall B beglongs to X , intersect RHS+(X + A - B) 
+					AttributeSet t = X.as;
+					t.insert(A);
+
+					vector<int> B_vector = X.as.toVector();
+					for (auto &B : B_vector) {
+						// t = X + A - B
+						t.erase(B);
+						
+						map<AttributeSet,TANE_Node>::iterator it = cur.layer.find(t);
+
+						if (it != cur.layer.end()) {
+							if (first_RHS == true) {
+								judge_set = (*it).second.RHS_plus;
+								first_RHS = false;
+							}
+							judge_set = judge_set.intersect((*it).second.RHS_plus);
+
+							if (judge_set.attribute_set == 0) {
+								break;
+							}
+						}
+						else {
+							blank_RHS = true;
+							break;
+						}
+					}
+
+					if (!blank_RHS) {
+						// A in judeg_set = intersect { RHS+(X+A-B) }
+						if (judge_set[A] == 1) {
+							//output X -> A
+							for (auto &x : B_vector) {
+								of << x << " ";
+							}
+
+							of << "-> ";
+							of << A << endl;
+						}
+					}
+
+				}
+
+				if (!X_removed)
+					remove_set.push_back(p_layer);
+			}
+			
 
 			p_layer++;
 		}
@@ -262,7 +327,7 @@ public:
 			cout << layerCount << endl;
 			++layerCount;
 			compute_dependecies(col, *pre, *cur, of);
-			prune(*pre, *cur);
+			prune(*pre, *cur, of);
 
 			delete pre;
 			pre = cur;
