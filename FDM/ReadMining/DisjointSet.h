@@ -277,13 +277,14 @@ public:
 		sizeEC = colmap.size();
 	}
 
-	void fromProduct(const ECSet& ecs1, const ECSet& ecs2, vector<int>& pRoots) {
+	void fromProduct(const ECSet& ecs1, const ECSet& ecs2, vector<int>* pRoots) {
 		if (ecs1.sizeNDEC == 0 || ecs2.sizeNDEC == 0) {
 			sizeNDEC = 0;
 			sizeEC = collen;
 			return;
 		}
 		equivalentClassSet.clear();
+		
 		//unordered_map<int, int>::iterator itFind;
 
 		// S
@@ -292,6 +293,7 @@ public:
 
 		// T
 		//int *pRoots = new int[collen];
+		
 		
 		
 		//memset(pRoots, 0, sizeof(pRoots));
@@ -303,7 +305,7 @@ public:
 		for (auto &ec : ecs1.equivalentClassSet) {
 			for (auto &row : ec) {
 				//(*pRoots)[row] = ec1ID;
-				pRoots[row] = ec1ID;
+				(*pRoots)[row] = ec1ID;
 			}
 			++ec1ID;
 		}
@@ -314,13 +316,13 @@ public:
 				//if (itFind != pRoots->end()) {
 				//	pCandidate[itFind->second].insert(row);
 				//}
-				root = pRoots[row];
+				root = (*pRoots)[row];
 				if (root != -1) {
 					pCandidate[root].push_back(row);
 				}
 			}
 			for (auto &row : ec) {
-				root = pRoots[row];
+				root = (*pRoots)[row];
 				if (root != -1) {
 					//origin = pCandidate + root;
 					if (pCandidate[root].size() >= 2) {
@@ -333,8 +335,17 @@ public:
 		}
 
 		sizeNDEC = equivalentClassSet.size();
-		sizeEC = collen - inecCount;
+		sizeEC = collen - inecCount + sizeNDEC;
 		delete[] pCandidate;
 		//delete pRoots;
+		//delete pRoots;
+
+		// reset T
+		for (auto &ec : ecs1.equivalentClassSet) {
+			for (auto &row : ec) {
+				//(*pRoots)[row] = ec1ID;
+				(*pRoots)[row] = -1;
+			}
+		}
 	}
 };

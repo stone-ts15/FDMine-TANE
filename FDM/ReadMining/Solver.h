@@ -24,6 +24,7 @@ public:
 	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), pds(NULL), pcRoots(NULL) {
 		pds = new DisjointSet[col];
 		pColmaps = new unordered_map<string, int>[col];
+		pcRoots = new vector<int>(collen, -1);
 		//loadInitialColumn(pdb);
 		sc = 0;
 	}
@@ -204,10 +205,10 @@ public:
 					node.pt.fromTable(*(node.db), node.as.toVector()[0], pColmaps[node.as.toVector()[0]]);
 				else {
 					//node.pt.getPartitionFromProduct(node.p1->pt, node.p2->pt);
-					pcRoots = new vector<int>(collen, -1);
-					node.pt.fromProduct(node.p1->pt, node.p2->pt, *pcRoots);
+					//pcRoots = new vector<int>(collen, -1);
+					node.pt.fromProduct(node.p1->pt, node.p2->pt, pcRoots);
 					//cout << node.as.toVector()[0]
-					delete pcRoots;
+					//delete pcRoots;
 				}
 					
 			}
