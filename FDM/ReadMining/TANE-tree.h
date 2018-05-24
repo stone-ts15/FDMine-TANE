@@ -178,7 +178,7 @@ public:
 
 public:
 	bool is_super_key() {
-		return false;
+		return pt.sizeNDEC == 0;
 	}
 };
 

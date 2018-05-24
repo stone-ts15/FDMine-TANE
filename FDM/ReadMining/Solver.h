@@ -186,7 +186,6 @@ public:
 		vector<int> choiceVector;
 		map<AttributeSet, TANE_Node>::iterator it;
 		AttributeSet X_E;
-		AttributeSet Eset;
 
 		for (auto &layer_record : cur.layer) {
 
@@ -219,10 +218,11 @@ public:
 			for (int i = 0; i < len; i++) {
 				int E = choiceVector[i];
 				//Eset.insert(E);
-				Eset = 1 << E;
+
 				//E belongs to X intersect RHS+(X)
 
-				X_E = node.as.substract(Eset);
+				X_E = node.as;
+				X_E.erase(E);
 
 				it = pre.layer.find(X_E);
 
@@ -276,7 +276,7 @@ public:
 			}
 
 			//X is a super key?
-			if (X.is_super_key()) {
+			/*if (X.is_super_key()) {
 
 				AttributeSet A_choices = X.RHS_plus.substract(X.as);
 
@@ -334,7 +334,7 @@ public:
 
 				if (!X_removed)
 					remove_set.push_back(p_layer);
-			}
+			}*/
 			
 
 			p_layer++;

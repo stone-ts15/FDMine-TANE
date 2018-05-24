@@ -333,7 +333,7 @@ public:
 		}
 
 		sizeNDEC = equivalentClassSet.size();
-		sizeEC = collen - inecCount;
+		sizeEC = collen - inecCount + sizeNDEC;
 		delete[] pCandidate;
 		//delete pRoots;
 	}
