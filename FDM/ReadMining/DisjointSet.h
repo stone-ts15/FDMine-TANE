@@ -85,7 +85,6 @@ public:
 			itFind = smap.find(str);
 			if (itFind == smap.end()) {
 				smap[str] = pair<int, int>(hashRow(row), 0);
-				//++partitionCount;
 				*itAsgn = -1;
 			}
 			else {
@@ -106,14 +105,6 @@ public:
 		sizeEC = smap.size();
 		//cout << index << ": " << sizeEC << endl;
 
-		/*int count = 0;
-		for (auto &i : *parr) {
-			if (i == 0 && count) {
-				cout << count + 1 << endl;
-				break;
-			}
-			++count;
-		}*/
 		smap.clear();
 	}
 };
