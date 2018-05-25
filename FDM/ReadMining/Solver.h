@@ -4,6 +4,7 @@
 #include "DisjointSet.h"
 #include "TANE-tree.h"
 #include "AttributeSet.h"
+#include <ctime>
 
 typedef unordered_map<AttributeSet, AttributeSet, AttributeSetHash> asmap;
 
@@ -26,13 +27,17 @@ public:
 	unordered_map<string, int>* pColmaps;
 	asmap RHS_plus_map;
 	vector<int> T;
+	vector<int> *S;
 	vector<FD> fds;
 public:
 	Solver(int vcol) : col(vcol), pdb(NULL) {}
 
 	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), T(collen, -1) {
 		pColmaps = new unordered_map<string, int>[col];
+		S = new vector<int>[vpdb->length + 1];
 	}
+
+	~Solver() { delete[] S; }
 
 	AttributeSet& get_RHS_plus(AttributeSet k) {
 		//try to find 
@@ -80,7 +85,9 @@ public:
 	}
 
 	void compute_dependecies(int col, TANE_Layer &pre, TANE_Layer &cur, ofstream& of) {
+
 		calcualte_initial_RHS_plus(pre, cur);
+		
 
 		AttributeSet R((1 << col) - 1);
 		AttributeSet choice;
@@ -91,6 +98,9 @@ public:
 		int index;
 		vector<int> X_E_vector;
 
+		double product_time = 0;
+		double cal_denpendency_time = 0;
+
 		for (auto &layer_record : cur.layer) {
 
 			TANE_Node &node = layer_record.second;
@@ -98,19 +108,24 @@ public:
 
 			choice = node_RHS_plus.intersect(node.as);
 
+			double start = clock();
+			
 			if (choice.attribute_set != 0) {
 				if (node.db != nullptr) {
 					index = node.as.toVector()[0];
 					node.pt.fromTable(*(node.db), index, pColmaps[index]);
 				}	
 				else {
-					node.pt.fromProduct(node.p1->pt, node.p2->pt, T);
+					node.pt.fromProduct(node.p1->pt, node.p2->pt, T, S);
 				}
 					
 			}
+
+			product_time += clock() - start;
 			
 			choiceVector = choice.toVector();
 			
+			start = clock();
 			for (auto &E : choiceVector) {
 
 				//E belongs to X intersect RHS+(X)
@@ -147,8 +162,13 @@ public:
 					//node.RHS_plus = a3;
 					node_RHS_plus = node_RHS_plus.substract(R.substract(node.as));
 				}
+
+				cal_denpendency_time += clock() - start;
 			}
 		}
+
+		cout << "product time:" << product_time / CLOCKS_PER_SEC << endl;
+		cout << "calc dependency time:" << cal_denpendency_time / CLOCKS_PER_SEC << endl;
 	}
 
 	void prune(TANE_Layer &pre, TANE_Layer & cur, ofstream& of) {
@@ -160,6 +180,7 @@ public:
 		AttributeSet t;
 		vector<int> X_vector;
 
+		double start = clock();
 		while (p_layer != cur.layer.end()) {
 			TANE_Node &X = p_layer->second;
 			AttributeSet &X_RHS_plus = get_RHS_plus(X.as);
@@ -233,6 +254,8 @@ public:
 		for (auto &layer_it : remove_set) {
 			cur.layer.erase(layer_it);
 		}
+
+		cout << "prune time:" << (clock() - start)/CLOCKS_PER_SEC << endl;
 	}
 
 	void TANE_search_FD() {

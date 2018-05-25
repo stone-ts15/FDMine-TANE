@@ -51,7 +51,7 @@ public:
 
 	void fromExistedTable() {}
 
-	void fromProduct(const ECSet& ecs1, const ECSet& ecs2, vector<int>& T) {
+	void fromProduct(const ECSet& ecs1, const ECSet& ecs2, vector<int>& T, vector<int> *S) {
 		if (ecs1.sizeNDEC == 0 || ecs2.sizeNDEC == 0) {
 			sizeNDEC = 0;
 			sizeEC = ecs1.sizeEC;
@@ -61,7 +61,7 @@ public:
 		
 
 		// S
-		vector<int> *S = new vector<int>[ecs1.sizeNDEC];
+		//vector<int> *S = new vector<int>[ecs1.sizeNDEC];
 
 		// T
 		int root;
@@ -98,7 +98,7 @@ public:
 
 		sizeNDEC = equivalentClassSet.size();
 		sizeEC = collen - inecCount + sizeNDEC;
-		delete[] S;
+		//delete[] S;
 
 		// reset T
 		for (auto &ec : ecs1.equivalentClassSet) {
