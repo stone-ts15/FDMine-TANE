@@ -46,7 +46,6 @@ public:
 		
 		while (*cur) {
 			if (*cur == ',' && *(cur + 1) != ' ') {
-				//table[index]->push_back(string(pre, cur));
 				*(itArrs[index]) = string(pre, cur);
 				++(itArrs[index]);
 				index = (index + 1) % col;
@@ -56,6 +55,5 @@ public:
 		}
 		*(itArrs[index]) = string(pre, cur);
 		++(itArrs[index]);
-		//table[index]->push_back(string(pre, cur));
 	}
 };
