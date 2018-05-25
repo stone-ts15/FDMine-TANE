@@ -27,7 +27,6 @@ void testdb() {
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
 	Solver solver(pdb);
-	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 	solver.solve();
 	cout << (clock() - start) / CLOCKS_PER_SEC << endl;
 
@@ -37,5 +36,6 @@ void testdb() {
 int main() {
 
 	testdb();
+	
 	system("pause");
 }

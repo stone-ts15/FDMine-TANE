@@ -5,209 +5,67 @@
 #include "TANE-tree.h"
 #include "AttributeSet.h"
 
-map<AttributeSet, AttributeSet> RHS_plus_map;
-
-AttributeSet& get_RHS_plus(AttributeSet k) {
-	//try to find 
-	AttributeSet X = k;
-	map<AttributeSet, AttributeSet>::iterator it = RHS_plus_map.find(X);
-
-	if (it != RHS_plus_map.end()) {
-		return (*it).second;
-	}
-
-	vector<int> X_choices = X.toVector();
-
-	AttributeSet result;
-	bool first = true;
-
-	for (auto &A : X_choices) {
-		X.erase(A);
-		
-		AttributeSet X_A_RHS_plus = get_RHS_plus(X);
-
-		if (first) {
-			result = X_A_RHS_plus;
-			first = false;
-		}
-		else {
-			result = result.intersect(X_A_RHS_plus);
-		}
-
-		X.insert(A);
-	}
-
-	RHS_plus_map.insert(pair<AttributeSet, AttributeSet>(X, result));
-	
-	it = RHS_plus_map.find(X);
-
-	return (*it).second;
-}
-
-class FD {
-public:
-	vector<int> l;
-	int r;
-public:
-	FD() {}
-	FD(vector<int> &a, int b): l(a),r(b){}
-};
+typedef unordered_map<AttributeSet, AttributeSet, AttributeSetHash> asmap;
 
 static bool cmp_lt(FD & a, FD & b) {
 	int la = a.l.size();
 	int lb = b.l.size();
 
-	int i = 0;
-	while (i < la && i < lb) {
-		if (a.l[i] < b.l[i]) {
-			return true;
-		}
-		else if (a.l[i] > b.l[i]) {
-			return false;
-		}
-		else {
-			i++;
-		}
+	for (int i = 0; i < la && i < lb; ++i) {
+		if (a.l[i] != b.l[i])
+			return a.l[i] < b.l[i];
 	}
 
-	if (la < lb) {
-		return true;
-	}
-	else if (la > lb) {
-		return false;
-	}
-	else {
-		return a.r < b.r;
-	}
+	return (la < lb) || (la == lb && a.r < b.r);
 }
-
 
 class Solver {
 public:
 	int col;
 	Database* pdb;
-	DisjointSet* pds;
-	unordered_map<long long, int> gmap;
-	//array<int, 4> initHashArg;
-	unordered_set<int> superKey;
-	int sc;
 	unordered_map<string, int>* pColmaps;
-	vector<int> *pcRoots;
-
-
+	asmap RHS_plus_map;
+	vector<int> T;
 	vector<FD> fds;
 public:
-	Solver(int vcol) : col(vcol), pdb(NULL){
-		pds = new DisjointSet[vcol];
-	}
+	Solver(int vcol) : col(vcol), pdb(NULL) {}
 
-	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), pds(NULL), pcRoots(NULL) {
-		pds = new DisjointSet[col];
+	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), T(collen, -1) {
 		pColmaps = new unordered_map<string, int>[col];
-		//loadInitialColumn(pdb);
-		sc = 0;
 	}
 
-	void loadInitialColumn(Database* vpdb) {
-		pdb = vpdb;
-		for (int i = 0; i < col; ++i) {
-			pds[i].fromTable(*pdb, i);
-		}
-	}
+	AttributeSet& get_RHS_plus(AttributeSet k) {
+		//try to find 
+		AttributeSet X = k;
+		asmap::iterator it = RHS_plus_map.find(X.attribute_set);
 
-	bool searchSingle(const AttributeSet& left, const AttributeSet& right, unordered_set<int>& sk) {
-		
-		
-		for (auto &s : sk) {
-			if (!((s & left.attribute_set) ^ s) )
-				return true;
-		}
-		
-		
-		if (left.attribute_set == 0)
-			return false;
-
-		vector<int> leftAttrs = left.toVector();
-		int size = leftAttrs.size();
-		vector<DisjointSet*> leftds;
-		int i, j, k;
-		int rv;
-
-		for (i = 0; i < size; ++i) {
-			if (pds[leftAttrs[i]].sizeEC == 0)
-				return true;
-			leftds.push_back(pds + leftAttrs[i]);
+		if (it != RHS_plus_map.end()) {
+			return (*it).second;
 		}
 
-		// if containing col[1]
-		if (!((2 & left.attribute_set) ^ 2))
-			sort(leftds);
+		vector<int> X_choices = X.toVector();
 
-		bool issuper = true;
+		AttributeSet result;
+		bool first = true;
 
-		vector<array<int, collen>::iterator> visit;
-		for (i = 0; i < size; ++i)
-			visit.push_back(leftds[i]->parr->begin());
-		
+		for (auto &A : X_choices) {
+			X.erase(A);
 
-		array<int, collen>::iterator rGroup = pds[right.toVector()[0]].parr->begin();
+			AttributeSet X_A_RHS_plus = get_RHS_plus(X);
 
-		unordered_map<long long, int>::iterator itFind;
-		long long hashValue;
-		//array<int, 4> hashArg(initHashArg);
-
-		++sc;
-		long long *pargs = new long long[4]{ 0 };
-		
-		bool pass;
-		for (i = 0; i < collen; ++i, ++rGroup) {
-			pass = false;
-			for (j = 0; j < size; ++j) {
-				pass = pass || (*(visit[j]) == -1);
-				//if (*(visit[j]) == -1)
-				//	pass = true;
-				// hashArg[4 - size + j] = *(visit[j]);
-				pargs[4 - size + j] = *(visit[j]);
-				++visit[j];
-			}
-			if (pass)
-				continue;
-			// hashValue = hashn(hashArg);
-			hashValue = hashn(pargs);
-			itFind = gmap.find(hashValue);
-			rv = *rGroup;
-			if (itFind == gmap.end()) {
-				//gmap[hashValue] = *rGroup;
-				gmap.insert(pair<long long, int>(hashValue, rv));
+			if (first) {
+				result = X_A_RHS_plus;
+				first = false;
 			}
 			else {
-				issuper = false;
-				if (rv == -1 || itFind->second != rv) {
-					gmap.clear();
-					return false;
-				}
+				result = result.intersect(X_A_RHS_plus);
 			}
-		}
-		gmap.clear();
-		if (issuper)
-			sk.insert(left.attribute_set);
-			
-		return true;
-	}
 
-	void sort(vector<DisjointSet*>& cand) {
-		DisjointSet* ptemp;
-		int size = cand.size();
-
-		for (int i = 0; i < size; ++i) {
-			for (int j = i + 1; j < size; ++j) {
-				if (cand[i]->sizeEC < cand[j]->sizeEC) {
-					ptemp = cand[i];
-					cand[i] = cand[j];
-					cand[j] = ptemp;
-				}
-			}
+			X.insert(A);
 		}
+
+		RHS_plus_map[X] = result;
+		return result;
 	}
 
 	void calcualte_initial_RHS_plus(TANE_Layer &pre, TANE_Layer &cur) {
@@ -226,8 +84,10 @@ public:
 		AttributeSet choice;
 		int len;
 		vector<int> choiceVector;
-		map<AttributeSet, TANE_Node>::iterator it;
+		ANmap::iterator it;
 		AttributeSet X_E;
+		int index;
+		vector<int> X_E_vector;
 
 		for (auto &layer_record : cur.layer) {
 
@@ -237,15 +97,12 @@ public:
 			choice = node_RHS_plus.intersect(node.as);
 
 			if (choice.attribute_set != 0) {
-				if (node.db != nullptr)
-					//node.pt.getPartitionFromTable(*node.db, node.as);
-					node.pt.fromTable(*(node.db), node.as.toVector()[0], pColmaps[node.as.toVector()[0]]);
+				if (node.db != nullptr) {
+					index = node.as.toVector()[0];
+					node.pt.fromTable(*(node.db), index, pColmaps[index]);
+				}	
 				else {
-					//node.pt.getPartitionFromProduct(node.p1->pt, node.p2->pt);
-					pcRoots = new vector<int>(collen, -1);
-					node.pt.fromProduct(node.p1->pt, node.p2->pt, *pcRoots);
-					//cout << node.as.toVector()[0]
-					delete pcRoots;
+					node.pt.fromProduct(node.p1->pt, node.p2->pt, T);
 				}
 					
 			}
@@ -259,13 +116,13 @@ public:
 				X_E = node.as;
 				X_E.erase(E);
 
-				it = pre.layer.find(X_E);
+				it = pre.layer.find(X_E.attribute_set);
 
 				if (it->second.pt.cardinality() == node.pt.cardinality()) {
 
 					//new FD found 
 					//output
-					vector<int> X_E_vector = X_E.toVector();
+					X_E_vector = X_E.toVector();
 
 					for (auto &t : X_E_vector) {
 						t = t + 1;
@@ -293,8 +150,13 @@ public:
 	}
 
 	void prune(TANE_Layer &pre, TANE_Layer & cur, ofstream& of) {
-		map<AttributeSet, TANE_Node>::iterator p_layer = cur.layer.begin();
-		vector<map<AttributeSet, TANE_Node>::iterator> remove_set;
+		ANmap::iterator p_layer = cur.layer.begin();
+		vector<ANmap::iterator> remove_set;
+		bool first_RHS = true;
+		bool blank_RHS = false;
+		AttributeSet judge_set;
+		AttributeSet t;
+		vector<int> X_vector;
 
 		while (p_layer != cur.layer.end()) {
 			TANE_Node &X = p_layer->second;
@@ -312,22 +174,17 @@ public:
 
 				AttributeSet &X_RHS_plus = get_RHS_plus(X.as);
 
-				AttributeSet A_choices = X_RHS_plus.substract(X.as);
-
-				vector<int> A_choices_vector = A_choices.toVector();
-
 				// A belongs to RHS+(X) - X
-				for (auto &A : A_choices_vector) {
-					bool first_RHS = true;
-					bool blank_RHS = false;
+				for (auto &A : X_RHS_plus.substract(X.as).toVector()) {
+					first_RHS = true;
+					blank_RHS = false;
 
-					AttributeSet judge_set;
+					
 					// judge set = forall B beglongs to X , intersect RHS+(X + A - B) 
-					AttributeSet t = X.as;
+					t = X.as;
 					t.insert(A);
 
-					vector<int> B_vector = X.as.toVector();
-					for (auto &B : B_vector) {
+					for (auto &B : X.as.toVector()) {
 						// t = X + A - B
 						t.erase(B);
 
@@ -354,7 +211,7 @@ public:
 						//output X -> A
 						//B_vector == X
 
-						vector<int> X_vector = X.as.toVector();
+						X_vector = X.as.toVector();
 						for (auto &x : X_vector) {
 							x = x+1;
 						}
@@ -378,12 +235,12 @@ public:
 
 	void TANE_search_FD() {
 
-		ofstream of("result.txt");
+		ofstream of("result.txt", ios::out);
 
 		TANE_Layer *pre;
 		TANE_Layer *cur;
 
-		RHS_plus_map.insert(pair<AttributeSet, AttributeSet>(AttributeSet(0), AttributeSet((1 << col) - 1)));
+		RHS_plus_map[AttributeSet(0)] = AttributeSet((1 << col) - 1);
 		pre = new TANE_Layer(true, col);
 		cur = new TANE_Layer(col, *pdb);
 		int layerCount = 0;
@@ -410,17 +267,6 @@ public:
 
 	void solve() {
 		TANE_search_FD();
-		/*
-		ECSet pts[15];
-		for (int i = 0; i < 15; ++i) {
-			pts[i].fromTable(*pdb, i, pColmaps[i]);
-			//cout << i << " " << pts[i].sizeEC << " " << pts[i].sizeNDEC << endl;
-		}
-
-		ECSet p12;
-		p12.fromProduct(pts[0], pts[1]);
-		cout << sc << endl;
-		*/
 	}
 
 	void sort_FDs() {
