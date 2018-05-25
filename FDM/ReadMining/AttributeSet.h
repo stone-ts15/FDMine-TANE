@@ -36,19 +36,17 @@ public:
 		// has low index attribute's set will be put in the front
 		unsigned int t = attribute_set;
 		unsigned int tk = k.attribute_set;
+		unsigned int t_1;
+		unsigned int tk_1;
 		for (int i = 0; i < 32; i++) {
-			unsigned int t_1 = t & 1;
-			unsigned int tk_1 = tk & 1;
-			if (t_1 > tk_1) {
-				return true;
-			}
-			else if (t_1 < tk_1) {
-				return false;
-			}
-			else {
-				t = t >> 1;
-				tk = tk >> 1;
-			}
+			t_1 = t & 1;
+			tk_1 = tk & 1;
+
+			if (t_1 != tk_1)
+				return t_1 > tk_1;
+
+			t >>= 1;
+			tk >>= 1;
 		}
 
 		return false;
@@ -61,7 +59,7 @@ public:
 			if (t & 1)
 				count++;
 
-			t = t >> 1;
+			t >>= 1;
 		}
 		return count;
 	}
@@ -107,15 +105,11 @@ public:
 			else if ((t & 1) || (tk & 1))
 				break;
 
-			t = t >> 1;
-			tk = tk >> 1;
+			t >>= 1;
+			tk >>= 1;
 		}
 
-		if (count == sz - 1)
-			return true;
-		else
-			return false;
-
+		return (count == sz - 1);
 	}
 
 public:
@@ -130,5 +124,11 @@ public:
 	AttributeSet substract(const AttributeSet &b) {
 		unsigned int temp = ~b.attribute_set;
 		return AttributeSet(attribute_set & temp);
+	}
+};
+
+struct AttributeSetHash {
+	size_t operator () (const AttributeSet &t) const {
+		return t.attribute_set % hashRange;
 	}
 };

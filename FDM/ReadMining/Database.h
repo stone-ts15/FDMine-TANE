@@ -4,16 +4,18 @@
 class Database {
 public:
 	static const unsigned rowlen = 210;
-	vector<array<string, util::collen>> table;
-	array<string, util::collen>::iterator *itArrs;
+	vector<vector<string>> table;
+	vector<string>::iterator *itArrs;
 	int col;
+	int length;
 
 public:
 	Database() {}
-	Database(unsigned vcol) : col(vcol), table(vcol) {
-		itArrs = new array<string, util::collen>::iterator[col];
+	Database(unsigned vcol) : col(vcol), table(vcol), length(0) {
+		itArrs = new vector<string>::iterator[col];
 		int i = 0;
 		for (auto &column : table) {
+			column = vector<string>(100000);
 			itArrs[i] = column.begin();
 			++i;
 		}
@@ -22,12 +24,17 @@ public:
 public:
 	void getTable(istream& is) {
 		char incstr[rowlen];
+		length = 0;
 		while (!is.eof()) {
 			is.getline(incstr, rowlen);
 			if (*incstr) {
 				parse(incstr);
+				++length;
 			}
-				
+		}
+		util::collen = length;
+		for (auto &column : table) {
+			column.resize(length);
 		}
 	}
 
@@ -39,6 +46,7 @@ public:
 		
 		while (*cur) {
 			if (*cur == ',' && *(cur + 1) != ' ') {
+				//table[index]->push_back(string(pre, cur));
 				*(itArrs[index]) = string(pre, cur);
 				++(itArrs[index]);
 				index = (index + 1) % col;
@@ -48,5 +56,6 @@ public:
 		}
 		*(itArrs[index]) = string(pre, cur);
 		++(itArrs[index]);
+		//table[index]->push_back(string(pre, cur));
 	}
 };
