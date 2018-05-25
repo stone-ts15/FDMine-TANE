@@ -17,24 +17,19 @@ public:
 	TANE_Node * p2 = nullptr;
 public:
 	TANE_Node() {}
-	TANE_Node(bool blank, int total_attribute_count) {
-		if (blank == true) {
-
-		}
-	}
-	TANE_Node(AttributeSet &ast, Database &db) {
+	TANE_Node(bool blank, int total_attribute_count) {}
+	TANE_Node(AttributeSet &ast, Database &vdb) {
 		as = ast;
-		this->db = &db;
+		db = &vdb;
 	}
-	TANE_Node(AttributeSet &ast, TANE_Node &p1, TANE_Node &p2) {
+	TANE_Node(AttributeSet &ast, TANE_Node &vp1, TANE_Node &vp2) {
 		as = ast;
-		this->p1 = &p1;
-		this->p2 = &p2;
+		p1 = &vp1;
+		p2 = &vp2;
 	}
 
 public:
 	bool is_super_key() {
-		//return false;
 		return pt.sizeNDEC == 0;
 	}
 };
@@ -57,7 +52,6 @@ public:
 		generate_next_level(pre, total_attribute_count);
 	}
 
-
 public:
 	void generate_first_level(int total_attribute_count, Database &db) {
 		AttributeSet temp;
@@ -69,7 +63,7 @@ public:
 	}
 
 	void generate_next_level(TANE_Layer &pre, int total_attribute_count) {
-		this->clear();
+		clear();
 
 		ANmap::iterator p = pre.layer.begin();
 		ANmap::iterator q = p;
@@ -110,7 +104,7 @@ public:
 		}
 	}
 
-	int size() {
+	size_t size() {
 		return layer.size();
 	}
 

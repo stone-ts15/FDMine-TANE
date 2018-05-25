@@ -21,7 +21,7 @@ void fillECSet(vector<string>& column, tablemap& colmap, tablemap::iterator& itF
 				newset->push_back(inverseHashRow(hashedRow));
 				newset->push_back(row);
 				ecs.equivalentClassSet->push_back(*newset);
-				itFind->second = ecs.sizeNDEC;
+				itFind->second = int(ecs.sizeNDEC);
 				++ecs.sizeNDEC;
 			}
 			else {
@@ -115,7 +115,7 @@ public:
 				newset->push_back(inverseHashRow(hashedRow));
 				newset->push_back(length);
 				ecs.equivalentClassSet->push_back(*newset);
-				itFind->second = ecs.sizeNDEC;
+				itFind->second = int(ecs.sizeNDEC);
 				++ecs.sizeNDEC;
 			}
 			else {
@@ -175,7 +175,7 @@ public:
 			column.resize(length);
 		}
 
-		int groupSize = double(col / numth) + 1;
+		int groupSize = int(double(col / numth) + 1);
 
 		// first layer
 		for (int i = 0; i < numth; ++i) {
