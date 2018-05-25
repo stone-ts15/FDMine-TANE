@@ -1,6 +1,3 @@
-#include "Database.h"
-#include "DisjointSet.h"
-#include "TANE-tree.h"
 #include <fstream>
 #include <ctime>
 #include "Solver.h"

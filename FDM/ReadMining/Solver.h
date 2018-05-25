@@ -9,10 +9,10 @@
 typedef unordered_map<AttributeSet, AttributeSet, AttributeSetHash> asmap;
 
 static bool cmp_lt(FD & a, FD & b) {
-	int la = a.l.size();
-	int lb = b.l.size();
+	size_t la = a.l.size();
+	size_t lb = b.l.size();
 
-	for (int i = 0; i < la && i < lb; ++i) {
+	for (size_t i = 0; i < la && i < lb; ++i) {
 		if (a.l[i] != b.l[i])
 			return a.l[i] < b.l[i];
 	}
@@ -24,7 +24,6 @@ class Solver {
 public:
 	int col;
 	Database* pdb;
-	unordered_map<string, int>* pColmaps;
 	asmap RHS_plus_map;
 	vector<int> T;
 	vector<int> *S;
@@ -33,7 +32,6 @@ public:
 	Solver(int vcol) : col(vcol), pdb(NULL) {}
 
 	Solver(Database* vpdb) : col(vpdb->col), pdb(vpdb), T(collen, -1) {
-		pColmaps = new unordered_map<string, int>[col];
 		S = new vector<int>[vpdb->length + 1];
 	}
 
@@ -72,7 +70,6 @@ public:
 		RHS_plus_map[X] = result;
 		it = RHS_plus_map.find(X);
 		return it->second;
-		//return result;
 	}
 
 	void calcualte_initial_RHS_plus(TANE_Layer &pre, TANE_Layer &cur) {
@@ -88,14 +85,11 @@ public:
 
 		calcualte_initial_RHS_plus(pre, cur);
 		
-
 		AttributeSet R((1 << col) - 1);
 		AttributeSet choice;
-		int len;
 		vector<int> choiceVector;
 		ANmap::iterator it;
 		AttributeSet X_E;
-		int index;
 		vector<int> X_E_vector;
 
 		double product_time = 0;
@@ -112,9 +106,7 @@ public:
 			
 			if (choice.attribute_set != 0) {
 				if (node.db != nullptr) {
-					index = node.as.toVector()[0];
-					//node.pt.fromTable(*(node.db), index, pColmaps[index]);
-					node.pt.fromExisted(node.db->initialCols[index]);
+					node.pt.fromExisted(node.db->initialCols[node.as.toVector()[0]]);
 				}	
 				else {
 					node.pt.fromProduct(node.p1->pt, node.p2->pt, T, S);
@@ -304,7 +296,6 @@ public:
 			for (auto &lv : fd.l) {
 				of << lv << " ";
 			}
-
 			of << "->";
 			of << " " << fd.r << endl;
 		}

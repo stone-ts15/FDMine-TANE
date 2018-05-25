@@ -1,21 +1,20 @@
 #pragma once
-
 #include "Util.h"
 
 // maximum of 32 attributes
 class AttributeSet {
 public:
-	unsigned int attribute_set = 0;
+	unsigned attribute_set = 0;
 
 public:
 	AttributeSet() {}
-	AttributeSet(unsigned int k) {
+	AttributeSet(unsigned k) {
 		attribute_set = k;
 	}
 	AttributeSet(const AttributeSet& src) : attribute_set(src.attribute_set) {}
 
-	int operator [] (int index) {
-		unsigned int k = 1 << index;
+	size_t operator [] (size_t index) {
+		unsigned k = 1 << index;
 		return (k & attribute_set) >> index;
 	}
 
@@ -34,11 +33,11 @@ public:
 
 	bool operator < (const AttributeSet &k) const {
 		// has low index attribute's set will be put in the front
-		unsigned int t = attribute_set;
-		unsigned int tk = k.attribute_set;
-		unsigned int t_1;
-		unsigned int tk_1;
-		for (int i = 0; i < 32; i++) {
+		unsigned t = attribute_set;
+		unsigned tk = k.attribute_set;
+		unsigned t_1;
+		unsigned tk_1;
+		for (unsigned i = 0; i < 32; i++) {
 			t_1 = t & 1;
 			tk_1 = tk & 1;
 
@@ -52,7 +51,7 @@ public:
 		return false;
 	}
 
-	int size() {
+	size_t size() {
 		int count = 0;
 		unsigned t = attribute_set;
 		for (int i = 0; i < 32; i++) {
@@ -68,11 +67,11 @@ public:
 		attribute_set = k.attribute_set;
 	}
 
-	void insert(int k) {
+	void insert(size_t k) {
 		attribute_set = attribute_set | (1 << k);
 	}
 
-	void erase(int k) {
+	void erase(size_t k) {
 		attribute_set = attribute_set & (~(1 << k));
 	}
 
@@ -93,9 +92,9 @@ public:
 	}
 
 	bool common_prefix(AttributeSet &k) {
-		int sz = size();
+		size_t sz = size();
 
-		int count = 0;
+		size_t count = 0;
 		unsigned t = attribute_set;
 		unsigned tk = k.attribute_set;
 
@@ -122,7 +121,7 @@ public:
 	}
 
 	AttributeSet substract(const AttributeSet &b) {
-		unsigned int temp = ~b.attribute_set;
+		unsigned temp = ~b.attribute_set;
 		return AttributeSet(attribute_set & temp);
 	}
 };
