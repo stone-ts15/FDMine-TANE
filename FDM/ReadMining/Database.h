@@ -6,6 +6,7 @@ public:
 	static const unsigned rowlen = 210;
 	vector<vector<string>> table;
 	vector<string>::iterator *itArrs;
+	//ECSet *initialCols;
 	int col;
 	int length;
 
@@ -13,6 +14,7 @@ public:
 	Database() {}
 	Database(unsigned vcol) : col(vcol), table(vcol), length(0) {
 		itArrs = new vector<string>::iterator[col];
+		//initialCols = new ECSet[col];
 		int i = 0;
 		for (auto &column : table) {
 			column = vector<string>(100000);
