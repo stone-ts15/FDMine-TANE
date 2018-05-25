@@ -4,24 +4,7 @@
 
 typedef unordered_map<string, int> tablemap;
 
-int finishCount;
-mutex mtx;
-
-void detect(int target) {
-	//lock_guard<recursive_mutex> mtx_locker(mtx);
-	while (true) {
-		if (mtx.try_lock()) {
-			if (finishCount >= target) {
-				mtx.unlock();
-				return;
-			}
-			mtx.unlock();
-		}
-		
-	}
-}
-
-void ffillECSet(vector<string>& column, tablemap& colmap, tablemap::iterator& itFind, ECSet& ecs) {
+void fillECSet(vector<string>& column, tablemap& colmap, tablemap::iterator& itFind, ECSet& ecs) {
 	int row = 0;
 	int hashedRow;
 	vector<int>* newset;
@@ -49,17 +32,17 @@ void ffillECSet(vector<string>& column, tablemap& colmap, tablemap::iterator& it
 	}
 	ecs.sizeEC = colmap.size();
 
-	lock_guard<mutex> mtx_locker(mtx);
-	//mtx.lock();
-	//cout << finishCount;
-	++finishCount;
-	//mtx.unlock();
-	//mtx_locker.~lock_guard();
+}
+
+void fillGroup(vector<vector<string>>& columns, tablemap* colmaps, tablemap::iterator* itFinds, ECSet* ecss, int start, int end) {
+	for (int i = start; i < end; ++i) {
+		fillECSet(columns[i], colmaps[i], itFinds[i], ecss[i]);
+	}
 }
 
 class Database {
 public:
-	static const unsigned rowlen = 210;
+	
 	tablemap* colmaps;
 	tablemap::iterator* itFinds;
 	ECSet *initialCols;
@@ -71,6 +54,7 @@ public:
 	// for parallel
 	vector<vector<string>> table;
 	vector<string>::iterator *itArrs;
+	vector<thread*> pts;
 
 public:
 	Database() {}
@@ -141,8 +125,10 @@ public:
 	}
 
 	void preparePrl() {
-		table = vector<vector<string>>(col, vector<string>(100000));
+		table = vector<vector<string>>(col, vector<string>(maxcollen));
 		itArrs = new vector<string>::iterator[col];
+		pts = vector<thread*>(numth);
+
 		int index = 0;
 		for (auto &column : table) {
 			itArrs[index] = column.begin();
@@ -189,43 +175,14 @@ public:
 			column.resize(length);
 		}
 
-		finishCount = 0;
+		int groupSize = double(col / numth) + 1;
 
 		// first layer
-		for (int i = 0; i < col; ++i) {
-			thread t(ffillECSet, ref(table[i]), ref(colmaps[i]), ref(itFinds[i]), ref(initialCols[i]));
-			t.detach();
-			//fillECSet(table[i], colmaps[i], itFinds[i], initialCols[i]);
+		for (int i = 0; i < numth; ++i) {
+			pts[i] = new thread(fillGroup, ref(table), colmaps, itFinds, initialCols, i * groupSize, mmin((i + 1) * groupSize, col));
 		}
-
-		thread(detect, col).join();
-	}
-
-	void fillECSet(vector<string>& column, tablemap& colmap, tablemap::iterator& itFind, ECSet& ecs) {
-		int row = 0;
-
-		for (auto &str : column) {
-			itFind = colmap.find(str);
-			if (itFind == colmap.end()) {
-				colmap[str] = hashRow(row);
-			}
-			else {
-				hashedRow = itFind->second;
-				if (hashedRow < 0) {
-					newset = new vector<int>();
-					newset->push_back(inverseHashRow(hashedRow));
-					newset->push_back(row);
-					ecs.equivalentClassSet->push_back(*newset);
-					itFind->second = ecs.sizeNDEC;
-					++ecs.sizeNDEC;
-				}
-				else {
-					ecs.equivalentClassSet->at(hashedRow).push_back(row);
-				}
-			}
-			++row;
+		for (int i = 0; i < numth; ++i) {
+			pts[i]->join();
 		}
-		ecs.sizeEC = colmap.size();
 	}
 };
-
