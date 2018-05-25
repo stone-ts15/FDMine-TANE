@@ -1,30 +1,35 @@
 #pragma once
 #include "Util.h"
+#include "DisjointSet.h"
+
+typedef unordered_map<string, int> tablemap;
 
 class Database {
 public:
 	static const unsigned rowlen = 210;
-	vector<vector<string>> table;
-	vector<string>::iterator *itArrs;
-	//ECSet *initialCols;
+	tablemap* colmaps;
+	tablemap::iterator* itFinds;
+	ECSet *initialCols;
 	int col;
 	int length;
+	int hashedRow;
+	vector<int> *newset;
 
 public:
 	Database() {}
-	Database(unsigned vcol) : col(vcol), table(vcol), length(0) {
-		itArrs = new vector<string>::iterator[col];
-		//initialCols = new ECSet[col];
-		int i = 0;
-		for (auto &column : table) {
-			column = vector<string>(100000);
-			itArrs[i] = column.begin();
-			++i;
-		}
+	Database(unsigned vcol) : col(vcol), length(0), colmaps(NULL), itFinds(NULL) {
+			
 	}
 
 public:
+	void prepareMap() {
+		colmaps = new tablemap[col];
+		itFinds = new tablemap::iterator[col];
+		initialCols = new ECSet[col];
+	}
 	void getTable(istream& is) {
+		prepareMap();
+
 		char incstr[rowlen];
 		length = 0;
 		while (!is.eof()) {
@@ -34,10 +39,10 @@ public:
 				++length;
 			}
 		}
-		util::collen = length;
-		for (auto &column : table) {
-			column.resize(length);
+		for (int i = 0; i < col; ++i) {
+			initialCols[i].sizeEC = colmaps[i].size();
 		}
+		util::collen = length;
 	}
 
 	void parse(const char* cstr) {
@@ -48,14 +53,38 @@ public:
 		
 		while (*cur) {
 			if (*cur == ',' && *(cur + 1) != ' ') {
-				*(itArrs[index]) = string(pre, cur);
-				++(itArrs[index]);
+				putcol(colmaps[index], itFinds[index], initialCols[index], string(pre, cur));
 				index = (index + 1) % col;
 				pre = cur + 1;
 			}
 			++cur;
 		}
-		*(itArrs[index]) = string(pre, cur);
-		++(itArrs[index]);
+		putcol(colmaps[index], itFinds[index], initialCols[index], string(pre, cur));
+	}
+
+	void put(int index, const string& str) {
+		putcol(colmaps[index], itFinds[index], initialCols[index], str);
+	}
+
+	void putcol(tablemap& colmap, tablemap::iterator& itFind, ECSet& ecs, const string& str) {
+		itFind = colmap.find(str);
+		if (itFind == colmap.end()) {
+			colmap[str] = hashRow(length);
+		}
+		else {
+			hashedRow = itFind->second;
+			if (hashedRow < 0) {
+				newset = new vector<int>();
+				newset->push_back(inverseHashRow(hashedRow));
+				newset->push_back(length);
+				ecs.equivalentClassSet->push_back(*newset);
+				itFind->second = ecs.sizeNDEC;
+				++ecs.sizeNDEC;
+			}
+			else {
+				ecs.equivalentClassSet->at(hashedRow).push_back(length);
+			}
+		}
 	}
 };
+

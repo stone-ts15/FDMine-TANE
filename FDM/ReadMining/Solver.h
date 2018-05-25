@@ -66,7 +66,7 @@ public:
 
 		RHS_plus_map[X] = result;
 		it = RHS_plus_map.find(X);
-		return (*it).second;
+		return it->second;
 		//return result;
 	}
 
@@ -101,7 +101,8 @@ public:
 			if (choice.attribute_set != 0) {
 				if (node.db != nullptr) {
 					index = node.as.toVector()[0];
-					node.pt.fromTable(*(node.db), index, pColmaps[index]);
+					//node.pt.fromTable(*(node.db), index, pColmaps[index]);
+					node.pt.fromExisted(node.db->initialCols[index]);
 				}	
 				else {
 					node.pt.fromProduct(node.p1->pt, node.p2->pt, T);

@@ -471,5 +471,40 @@ void getPartitionFromProduct(DSPartition& p1, DSPartition& p2) {
 }
 };
 
+----------------------------------------------class ECSet-----------------------------------
+void fromTable(const Database& db, int index, unordered_map<string, int>& colmap) {
+const vector<string>& column = db.table[index];
+unordered_map<string, int>::iterator itFind;
+vector<int> *newset = NULL;
+int row = 0;
+c.sizeNDEC = 0;
+int hashedRow;
+
+for (auto &str : column) {
+itFind = colmap.find(str);
+if (itFind == colmap.end()) {
+colmap[str] = hashRow(row);
+}
+else {
+hashedRow = itFind->second;
+if (hashedRow < 0) {
+newset = new vector<int>();
+newset->push_back(inverseHashRow(hashedRow));
+newset->push_back(row);
+c.equivalentClassSet->push_back(*newset);
+itFind->second = c.sizeNDEC;
+++c.sizeNDEC;
+}
+else {
+//equivalentClassSet[hashedRow].push_back(row);
+c.equivalentClassSet->at(hashedRow).push_back(row);
+}
+}
+
+++row;
+}
+
+c.sizeEC = colmap.size();
+}
 
 */
