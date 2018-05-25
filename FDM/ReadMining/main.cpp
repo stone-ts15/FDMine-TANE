@@ -23,7 +23,7 @@ void testdb() {
 	double start;
 
 	start = clock();
-	pdb->getTable(*pfin);
+	pdb->getTablePrl(*pfin);
 	cout << "get table time:" << (clock() - start) / CLOCKS_PER_SEC << endl;
 
 	Solver solver(pdb);
