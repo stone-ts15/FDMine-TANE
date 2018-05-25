@@ -16,6 +16,9 @@ using namespace std;
 
 namespace util {
 	const unsigned hashRange = 1000000007;
+	const unsigned numth = 3;
+	const unsigned rowlen = 210;
+	const unsigned maxcollen = 100000;
 
 	int hashString(string str) {
 		int count = 0;
@@ -32,6 +35,10 @@ namespace util {
 
 	inline int inverseHashRow(int hashrow) {
 		return -hashrow - 1;
+	}
+
+	inline int mmin(int x, int y) {
+		return x < y ? x : y;
 	}
 
 	size_t collen = 0;
