@@ -65,7 +65,9 @@ public:
 		}
 
 		RHS_plus_map[X] = result;
-		return result;
+		it = RHS_plus_map.find(X);
+		return (*it).second;
+		//return result;
 	}
 
 	void calcualte_initial_RHS_plus(TANE_Layer &pre, TANE_Layer &cur) {
